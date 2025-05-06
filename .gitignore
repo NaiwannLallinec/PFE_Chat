@@ -1,0 +1,23 @@
+# Dossiers
+DOC/
+env/
+node_modules/
+
+
+# Fichiers
+RapportSem1.pdf
+Screenshot from 2025-04-09 17-05-21.png
+client_secret.json
+package-lock.json
+package.json
+searchytb.py
+server.cert
+server.key
+tokens.json
+
+# Fichiers Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.py
