@@ -1,0 +1,9 @@
+{
+  "name": "youtube-producer",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "pg": "^8.11.3",
+    "amqplib": "^0.10.3"
+  }
+}
