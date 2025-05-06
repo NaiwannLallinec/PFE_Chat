@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Authentification OAuth</title>
+  <style>
+    body{font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;background:linear-gradient(135deg,#f0f4ff 0%,#d9e7ff 100%)}
+    h1{margin-bottom:20px;color:#333}
+    a,button{display:block;margin:10px 0;padding:10px 20px;background:#4ecdc4;color:#fff;border:0;border-radius:5px;font-size:1rem;text-decoration:none;cursor:pointer}
+    a:hover,button:hover{background:#ff6b6b}
+    form{display:flex;flex-direction:column;align-items:center;margin:20px 0}
+    input{margin:4px 0;padding:8px 10px;border:1px solid #ccc;border-radius:4px;width:260px}
+  </style>
+</head>
+<body>
+  <h1>Configuration des chaînes</h1>
+
+  <form id="channelForm">
+    <input id="twitchChannel"  placeholder="Chaîne Twitch (sans #)"         required />
+    <input id="youtubeChatId"  placeholder="liveChatId YouTube (Cg0K…)"     required />
+    <input id="youtubeVideoId" placeholder="VideoId YouTube (Wglmr5Tx2t4)"  required />
+    <input id="tiktokUser"     placeholder="Pseudo TikTok (live)"           required />
+    <button type="submit">Sauvegarder</button>
+  </form>
+
+  <a href="/authorize-twitch">Obtenir le token Twitch</a>
+  <a href="/authorize-youtube">Obtenir le token YouTube</a>
+  <a href="/chat">Accéder au chat agrégé</a>
+
+  <script>
+    document.getElementById('channelForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const body={
+        twitchChannel:     document.getElementById('twitchChannel').value,
+        youtubeLiveChatId: document.getElementById('youtubeChatId').value,
+        youtubeVideoId:    document.getElementById('youtubeVideoId').value,
+        tiktokUsername:    document.getElementById('tiktokUser').value,
+      };
+      const r=await fetch('/save-channels',{method:'POST',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      alert(r.ok?'Chaînes enregistrées !':'Erreur enregistrement');
+    });
+  </script>
+</body>
+</html>
