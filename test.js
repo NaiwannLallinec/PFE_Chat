@@ -23,7 +23,7 @@ async function testTwitchChat() {
       console.log(`[TWITCH][${tags['display-name']}]: ${message}`);
     });
 
-    // Déconnexion après 10 secondes pour le test
+    // Déconnexion après 10 secondes pour les tests
     setTimeout(() => client.disconnect(), 10000);
   } catch (error) {
     console.error('[TWITCH] Erreur lors du test:', error);
