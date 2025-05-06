@@ -1,0 +1,10 @@
+{
+    "name": "tiktok-producer",
+    "type": "module",
+    "dependencies": {
+      "tiktok-live-connector": "^1.2.3",
+      "pg": "^8.11.3",
+      "amqplib": "^0.10.3"
+    }
+  }
+  

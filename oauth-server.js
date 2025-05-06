@@ -258,4 +258,3 @@
    
    /* ───────── 8.  Export facultatif ──────────────────────────────────────── */
    export { getValidToken };
-   
