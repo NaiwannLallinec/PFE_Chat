@@ -1,0 +1,24 @@
+<!-- public/login.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Connexion</title>
+  <style>
+    body { font-family: sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }
+    form { display:flex; flex-direction:column; gap:10px; }
+    input, button { padding:8px; font-size:1rem; }
+    a { font-size:0.9rem; text-align:center; margin-top:10px; color:#007bff; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <form method="POST" action="/login">
+    <h1>Connexion</h1>
+    <input name="username" placeholder="Nom d'utilisateur" required />
+    <input name="password" type="password" placeholder="Mot de passe" required />
+    <button type="submit">Se connecter</button>
+    <a href="/signup.html">Pas encore de compte ? Inscrivez-vous</a>
+  </form>
+</body>
+</html>
