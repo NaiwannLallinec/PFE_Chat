@@ -1,160 +1,195 @@
-// services/twitch/index.js
-// — Producteur Twitch : chat + viewers ➜ queue RabbitMQ "chat-messages"
-
-import 'dotenv/config';                       // charge DB_URL, AMQP_URL
+import express from 'express';
 import tmi from 'tmi.js';
-import pg from 'pg';
-import fetch from 'node-fetch';
 import amqp from 'amqplib';
-import { getValidToken } from '../../shared/tokenManager.js';
+import fetch from 'node-fetch';
+import 'dotenv/config';
 import { TWITCH_CLIENT_ID } from '../../shared/config.js';
 
 const {
-  DB_URL,
-  AMQP_URL = 'amqp://mq',                    // hors Docker : 'amqp://localhost'
+  AMQP_URL = 'amqp://mq',
+  PORT     = 3001,
 } = process.env;
 
-const USER_ID = 1;                            // mono-user POC
+const app = express();
+app.use(express.json());
 
-// 1. PostgreSQL + RabbitMQ --------------------------------------------------
-const pool      = new pg.Pool({ connectionString: DB_URL });
+// twitch_channel → { client, users: Set<user_id>, viewerInterval, watchdog }
+const twitchConnections = new Map();
+
+// user_id → twitch_channel
+const userToChannel = new Map();
+
+// 📦 RabbitMQ
 const amqpConn  = await amqp.connect(AMQP_URL);
 const mqChannel = await amqpConn.createChannel();
 await mqChannel.assertQueue('chat-messages', { durable: true });
 
-// 1bis. Écoute des MAJ sur channels -----------------------------------------
-const listener = await pool.connect();
-await listener.query('LISTEN channels_updated');
-listener.on('notification', async msg => {
-  const uid = Number(msg.payload);
-  if (uid !== USER_ID) return;
-
-  const { rows:[ch] } = await pool.query(
-    `SELECT twitch_channel, active_twitch
-       FROM channels
-      WHERE user_id = $1`,
-    [ USER_ID ]
-  );
-
-  // flag désactivé → on arrête
-  if (!ch?.active_twitch) {
-    console.log('[TWITCH] flux désactivé via BDD → arrêt');
-    client.disconnect();
-    process.exit(0);
-  }
-
-  // pseudo modifié → reconnexion
-  if (ch.twitch_channel !== currentChannel) {
-    console.log('[TWITCH] twitch_channel changé → reconnexion');
-    await client.disconnect();
-    startTwitchProducer(ch.twitch_channel);
-  }
-});
-
-// 2. Fonction de (re)démarrage du producer Twitch --------------------------
-let client;
-let currentChannel;
-let lastActivity;
-let viewerInterval;
-let inactivityWatchdog;
-
-async function startTwitchProducer(channel) {
-  currentChannel = channel;
-  client = new tmi.Client({
+// 🚀 Démarrer une connexion Twitch (si elle n’existe pas déjà)
+async function createTwitchConnection(twitch_channel, twitch_token) {
+  const client = new tmi.Client({
     connection: { reconnect: true, secure: true },
-    identity:   { username: 'devpfe', password: await getValidToken('twitch','oauth') },
-    channels:   [ channel ],
+    identity:   { username: 'devpfe', password: `oauth:${twitch_token}` },
+    channels:   [ twitch_channel ],
   });
 
   await client.connect();
-  console.log('[TWITCH] connecté au chat →', channel);
+  console.log(`[TWITCH] connecté à #${twitch_channel}`);
 
-  lastActivity = Date.now();
+  const users = new Set();
+  let lastActivity = Date.now();
 
   client.on('message', (_chan, tags, message, self) => {
     if (self) return;
     lastActivity = Date.now();
     const user = tags['display-name'] || tags.username;
+
     mqChannel.sendToQueue('chat-messages',
-      Buffer.from(JSON.stringify({
-        type:     'chat',
-        platform: 'TWITCH',
-        text:     `${user}: ${message}`,
-      })),
-      { persistent: true }
+        Buffer.from(JSON.stringify({
+          type:     'chat',
+          platform: 'TWITCH',
+          text:     `${user}: ${message}`,
+          user_ids: Array.from(users),
+        })),
+        { persistent: true }
     );
   });
 
-  // Viewer count interval
-  clearInterval(viewerInterval);
-  const VIEWER_INTERVAL   = 30_000; // ms
-  viewerInterval = setInterval(async () => {
+  const viewerInterval = setInterval(async () => {
     try {
-      const tk  = await getValidToken('twitch');
       const res = await fetch(
-        `https://api.twitch.tv/helix/streams?user_login=${channel}`,
-        {
-          headers: {
-            'Client-ID': TWITCH_CLIENT_ID,
-            'Authorization': `Bearer ${tk}`,
-          },
-        }
+          `https://api.twitch.tv/helix/streams?user_login=${twitch_channel}`,
+          {
+            headers: {
+              'Client-ID': TWITCH_CLIENT_ID,
+              'Authorization': `Bearer ${twitch_token}`,
+            },
+          }
       );
-      const d     = await res.json();
-      const count = d.data?.length ? d.data[0].viewer_count : 0;
+      const d = await res.json();
+      if (!d.data || d.data.length === 0) {
+        throw Object.assign(new Error('No active stream'), { code: 'NO_STREAM' });
+      }
+
+      const count = d.data[0].viewer_count;
       lastActivity = Date.now();
 
       mqChannel.sendToQueue('chat-messages',
-        Buffer.from(JSON.stringify({
-          type:     'viewers',
-          platform: 'TWITCH',
-          count,
-        })),
-        { persistent: true }
+          Buffer.from(JSON.stringify({
+            type:     'viewers',
+            platform: 'TWITCH',
+            count,
+            user_ids: Array.from(users),
+          })),
+          { persistent: true }
       );
     } catch (e) {
-      console.error('[TWITCH] erreur fetch viewer count :', e);
+      if (e.code === 'NO_STREAM') {
+        console.warn(`[TWITCH] ${twitch_channel} est hors ligne`);
+      } else {
+        console.error(`[TWITCH] erreur viewers sur #${twitch_channel} :`, e);
+      }
     }
-  }, VIEWER_INTERVAL);
+  }, 30_000);
 
-  // Activity watchdog
-  clearInterval(inactivityWatchdog);
-  const WATCHDOG_INTERVAL = 10_000;  // ms
-  const INACTIVITY_LIMIT  = 60_000;  // ms
-  inactivityWatchdog = setInterval(() => {
-    if (Date.now() - lastActivity > INACTIVITY_LIMIT) {
-      console.error(`[TWITCH] pas d'activité depuis ${INACTIVITY_LIMIT/1000}s → arrêt`);
-      client.disconnect();
-      process.exit(1);
+  const watchdog = setInterval(() => {
+    if (Date.now() - lastActivity > 60_000) {
+      console.warn(`[TWITCH] inactivité sur #${twitch_channel} → déconnexion`);
+      stopTwitchConnection(twitch_channel);
     }
-  }, WATCHDOG_INTERVAL);
+  }, 10_000);
 
-  // Gestion déconnexion & erreurs
-  client.on('disconnected', reason => {
-    console.error('[TWITCH] disconnected :', reason);
-    process.exit(1);
-  });
-  client.on('reconnect', () => {
-    console.log('[TWITCH] tentative de reconnexion…');
-  });
-  client.on('error', err => {
-    console.error('[TWITCH] erreur client :', err);
-  });
+  twitchConnections.set(twitch_channel, { client, users, viewerInterval, watchdog });
+  return users;
 }
 
-// 3. Démarrage initial ------------------------------------------------------
-(async () => {
-  const { rows:[ch0] } = await pool.query(
-    `SELECT twitch_channel
-       FROM channels
-      WHERE user_id = $1
-        AND active_twitch = TRUE`,
-    [ USER_ID ]
-  );
-  if (!ch0?.twitch_channel) {
-    console.error('[TWITCH] twitch_channel actif manquant en BDD');
-    process.exit(1);
+// 🧹 Stopper une connexion Twitch (si plus d’abonnés)
+function stopTwitchConnection(twitch_channel) {
+  const conn = twitchConnections.get(twitch_channel);
+  if (!conn) return;
+
+  conn.client.disconnect();
+  clearInterval(conn.viewerInterval);
+  clearInterval(conn.watchdog);
+  twitchConnections.delete(twitch_channel);
+
+  console.log(`[TWITCH] déconnecté de #${twitch_channel}`);
+}
+
+// ✅ POST /twitch/start
+app.post('/twitch/start', async (req, res) => {
+  const { user_id, twitch_channel, twitch_token } = req.body;
+
+  if (!user_id || !twitch_channel || !twitch_token) {
+    return res.status(400).json({ error: 'Champs requis : user_id, twitch_channel, twitch_token' });
   }
 
-  await startTwitchProducer(ch0.twitch_channel);
-})();
+  // Si déjà abonné à un autre channel, on le retire
+  if (userToChannel.has(user_id)) {
+    const oldChannel = userToChannel.get(user_id);
+    const conn = twitchConnections.get(oldChannel);
+    if (conn) {
+      conn.users.delete(user_id);
+      if (conn.users.size === 0) {
+        stopTwitchConnection(oldChannel);
+      }
+    }
+  }
+
+  // Nouvelle inscription
+  let users;
+  if (twitchConnections.has(twitch_channel)) {
+    users = twitchConnections.get(twitch_channel).users;
+    console.log(`[TWITCH] ajout user ${user_id} à #${twitch_channel}`);
+  } else {
+    try {
+      users = await createTwitchConnection(twitch_channel, twitch_token);
+    } catch (e) {
+      console.error(`[TWITCH] erreur lors de la connexion à #${twitch_channel} :`, e);
+      return res.status(500).json({ error: 'Impossible de se connecter au streamer' });
+    }
+  }
+
+  users.add(user_id);
+  userToChannel.set(user_id, twitch_channel);
+
+  return res.status(200).json({ message: `Connexion ok pour user ${user_id} sur #${twitch_channel}` });
+});
+
+// ✅ POST /twitch/stop
+app.post('/twitch/stop', (req, res) => {
+  const { user_id } = req.body;
+
+  if (!userToChannel.has(user_id)) {
+    return res.status(404).json({ error: 'user_id non abonné à un streamer' });
+  }
+
+  const channel = userToChannel.get(user_id);
+  const conn = twitchConnections.get(channel);
+
+  if (conn) {
+    conn.users.delete(user_id);
+    if (conn.users.size === 0) {
+      stopTwitchConnection(channel);
+    }
+  }
+
+  userToChannel.delete(user_id);
+  return res.status(200).json({ message: `Déconnexion ok pour user ${user_id}` });
+});
+
+// ✅ GET /twitch/status
+app.get('/twitch/status', (req, res) => {
+  const status = {};
+  for (const [channel, { users }] of twitchConnections.entries()) {
+    status[channel] = Array.from(users);
+  }
+  res.json({
+    active_channels: twitchConnections.size,
+    status
+  });
+});
+
+// 🚀 Serveur
+app.listen(PORT, () => {
+  console.log(`✅ Serveur Twitch en écoute sur http://localhost:${PORT}`);
+});
