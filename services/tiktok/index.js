@@ -1,122 +1,159 @@
-// services/tiktok/index.js
-// — Producteur TikTok : chat + viewers ➜ file RabbitMQ "chat-messages"
-
-import 'dotenv/config';                       // charge .env (DB_URL, AMQP_URL)
-import { WebcastPushConnection } from 'tiktok-live-connector';
-import pg   from 'pg';
+import express from 'express';
 import amqp from 'amqplib';
+import { WebcastPushConnection } from 'tiktok-live-connector';
+import 'dotenv/config';
 
 const {
-  DB_URL   = 'postgres://user:password@localhost:5432/mydatabase',
-  AMQP_URL = 'amqp://user:password@localhost',   // hors Docker, sinon 'amqp://mq'
+  AMQP_URL = 'amqp://mq',
+  PORT     = 3002,
 } = process.env;
 
-const USER_ID = 1;             // mono-user POC
+const app = express();
+app.use(express.json());
 
-// 1. PostgreSQL + RabbitMQ -------------------------------------------------------
-const pool      = new pg.Pool({ connectionString: DB_URL });
+// tiktok_username → { conn, users: Set<user_id>, watchdog }
+const tiktokConnections = new Map();
+// user_id → tiktok_username
+const userToTiktok = new Map();
+
+// 🔗 RabbitMQ
 const amqpConn  = await amqp.connect(AMQP_URL);
 const mqChannel = await amqpConn.createChannel();
 await mqChannel.assertQueue('chat-messages', { durable: true });
 
-// 1bis. Écoute des modifications sur table channels -----------------------------
-const listener = await pool.connect();
-await listener.query('LISTEN channels_updated');
-listener.on('notification', async msg => {
-  const uid = Number(msg.payload);
-  if (uid !== USER_ID) return;
+// ▶️ Connexion TikTok
+async function createTikTokConnection(tiktok_username) {
+  const conn = new WebcastPushConnection(tiktok_username);
+  const users = new Set();
+  let lastActivity = Date.now();
 
-  const { rows:[ch] } = await pool.query(
-    `SELECT tiktok_username, active_tiktok
-       FROM channels
-      WHERE user_id = $1`,
-    [ USER_ID ]
-  );
-
-  // flux désactivé → on quitte proprement
-  if (!ch?.active_tiktok) {
-    console.log('[TIKTOK] flux désactivé via BDD → arrêt du service');
-    process.exit(0);
-  }
-
-  // si le username a changé, reconnect
-  if (ch.tiktok_username !== tiktokUsername) {
-    console.log('[TIKTOK] username modifié:', tiktokUsername, '→', ch.tiktok_username);
-    await conn.disconnect();
-    startTikTokProducer(ch.tiktok_username);
-  }
-});
-
-// 2. Fonction de (re)démarrage du producer TikTok -------------------------------
-let tiktokUsername;
-let conn;
-let lastRoomUser;
-let watchdog;
-
-async function startTikTokProducer(username) {
-  tiktokUsername = username;
-  conn = new WebcastPushConnection(tiktokUsername);
   await conn.connect();
-  console.log('[TIKTOK] connecté au live →', tiktokUsername);
+  console.log(`[TIKTOK] connecté au live de ${tiktok_username}`);
 
-  lastRoomUser = Date.now();
   conn.on('chat', data => {
-    lastRoomUser = Date.now();
+    lastActivity = Date.now();
     mqChannel.sendToQueue('chat-messages',
-      Buffer.from(JSON.stringify({
-        type:     'chat',
-        platform: 'TIKTOK',
-        text:     `${data.nickname}: ${data.comment}`,
-      })),
-      { persistent: true }
+        Buffer.from(JSON.stringify({
+          type:     'chat',
+          platform: 'TIKTOK',
+          text:     `${data.nickname}: ${data.comment}`,
+          user_ids: Array.from(users),
+        })),
+        { persistent: true }
     );
   });
 
   conn.on('roomUser', data => {
-    lastRoomUser = Date.now();
+    lastActivity = Date.now();
     mqChannel.sendToQueue('chat-messages',
-      Buffer.from(JSON.stringify({
-        type:     'viewers',
-        platform: 'TIKTOK',
-        count:    data.viewerCount,
-      })),
-      { persistent: true }
+        Buffer.from(JSON.stringify({
+          type:     'viewers',
+          platform: 'TIKTOK',
+          count:    data.viewerCount,
+          user_ids: Array.from(users),
+        })),
+        { persistent: true }
     );
   });
 
   conn.on('disconnected', () => {
-    console.log('[TIKTOK] disconnected – arrêt du service');
-    process.exit(0);
+    console.log(`[TIKTOK] ${tiktok_username} déconnecté`);
+    stopTikTokConnection(tiktok_username);
   });
 
-  // Watchdog inactivité
-  clearInterval(watchdog);
-  const WATCHDOG_INTERVAL = 10_000;  // 10 s
-  const INACTIVITY_LIMIT  = 30_000;  // 30 s
-  watchdog = setInterval(() => {
-    if (Date.now() - lastRoomUser > INACTIVITY_LIMIT) {
-      console.log(`[TIKTOK] plus de roomUser depuis ${INACTIVITY_LIMIT/1000}s → arrêt`);
+  const watchdog = setInterval(() => {
+    if (Date.now() - lastActivity > 30_000) {
+      console.warn(`[TIKTOK] inactivité sur ${tiktok_username} → arrêt`);
       conn.disconnect();
-      process.exit(0);
+      stopTikTokConnection(tiktok_username);
     }
-  }, WATCHDOG_INTERVAL);
+  }, 10_000);
+
+  tiktokConnections.set(tiktok_username, { conn, users, watchdog });
+  return users;
 }
 
-// 3. Tout démarre ici ----------------------------------------------------------
-(async () => {
-  // on récupère d'abord l'enregistrement actif
-  const { rows:[chan0] } = await pool.query(
-    `SELECT tiktok_username
-       FROM channels
-      WHERE user_id = $1
-        AND active_tiktok = TRUE`,
-    [ USER_ID ]
-  );
-  if (!chan0?.tiktok_username) {
-    console.error('[TIKTOK] Aucun tiktok_username actif en BDD pour user_id=', USER_ID);
-    process.exit(1);
+// 🛑 Stopper une connexion TikTok
+function stopTikTokConnection(tiktok_username) {
+  const instance = tiktokConnections.get(tiktok_username);
+  if (!instance) return;
+
+  clearInterval(instance.watchdog);
+  instance.conn.disconnect();
+  tiktokConnections.delete(tiktok_username);
+
+  console.log(`[TIKTOK] arrêt complet de ${tiktok_username}`);
+}
+
+// ✅ POST /tiktok/start
+app.post('/tiktok/start', async (req, res) => {
+  const { user_id, tiktok_username } = req.body;
+
+  if (!user_id || !tiktok_username) {
+    return res.status(400).json({ error: 'Champs requis : user_id, tiktok_username' });
   }
 
-  // on lance le producer
-  await startTikTokProducer(chan0.tiktok_username);
-})();
+  // Retirer user de toute connexion précédente
+  if (userToTiktok.has(user_id)) {
+    const oldUsername = userToTiktok.get(user_id);
+    const conn = tiktokConnections.get(oldUsername);
+    if (conn) {
+      conn.users.delete(user_id);
+      if (conn.users.size === 0) stopTikTokConnection(oldUsername);
+    }
+  }
+
+  let users;
+  if (tiktokConnections.has(tiktok_username)) {
+    users = tiktokConnections.get(tiktok_username).users;
+    console.log(`[TIKTOK] ajout user ${user_id} à ${tiktok_username}`);
+  } else {
+    try {
+      users = await createTikTokConnection(tiktok_username);
+    } catch (e) {
+      console.error(`[TIKTOK] échec de connexion à ${tiktok_username} :`, e);
+      return res.status(500).json({ error: `Impossible de se connecter à ${tiktok_username}` });
+    }
+  }
+
+  users.add(user_id);
+  userToTiktok.set(user_id, tiktok_username);
+
+  return res.status(200).json({ message: `Connexion ok pour user ${user_id} sur ${tiktok_username}` });
+});
+
+// ✅ POST /tiktok/stop
+app.post('/tiktok/stop', (req, res) => {
+  const { user_id } = req.body;
+
+  if (!userToTiktok.has(user_id)) {
+    return res.status(404).json({ error: 'user_id non abonné à un live TikTok' });
+  }
+
+  const username = userToTiktok.get(user_id);
+  const conn = tiktokConnections.get(username);
+  if (conn) {
+    conn.users.delete(user_id);
+    if (conn.users.size === 0) stopTikTokConnection(username);
+  }
+
+  userToTiktok.delete(user_id);
+  return res.status(200).json({ message: `Déconnexion ok pour user ${user_id}` });
+});
+
+// ✅ GET /tiktok/status
+app.get('/tiktok/status', (req, res) => {
+  const status = {};
+  for (const [username, { users }] of tiktokConnections.entries()) {
+    status[username] = Array.from(users);
+  }
+  res.json({
+    active_streams: tiktokConnections.size,
+    status
+  });
+});
+
+// 🚀 Serveur
+app.listen(PORT, () => {
+  console.log(`✅ Serveur TikTok en écoute sur http://localhost:${PORT}`);
+});
