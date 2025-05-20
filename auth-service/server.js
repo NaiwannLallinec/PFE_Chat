@@ -266,6 +266,10 @@ app.get('/chat', requireAuth, (_req, res) =>
   res.redirect('/chat.html')
 );
 
+app.get('/me', requireAuth, (req, res) => {
+  res.json({ userId: req.session.userId });
+});
+
 //
 // 7.  Démarrage
 //

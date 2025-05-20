@@ -483,8 +483,37 @@
     </div>
   </div>
   <script src="https://localhost:5000/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io('https://localhost:5000', { path: '/socket.io' });
+<script>
+  fetch('/me')
+      .then(res => res.json())
+      .then(({ userId }) => {
+      const socket = io('https://localhost:5000', {
+      path: '/socket.io',
+      auth: { userId }
+    });
+
+      // ✅ Tout ce qui suit DOIT être à l’intérieur ici
+      socket.on('chat_message', (data) => {
+      if (isSlowMode) {
+      messageQueue.push(data);
+    } else {
+      processMessage(data);
+    }
+    });
+
+      socket.on('viewer_count', (data) => {
+      twitchViewersSpan.textContent = `Twitch: ${data.twitch}`;
+      tiktokViewersSpan.textContent = `TikTok: ${data.tiktok}`;
+      youtubeViewersSpan.textContent = `YouTube: ${data.youtube}`;
+      totalViewersSpan.textContent = `Total: ${data.total}`;
+    });
+
+      // Si tu veux rendre `socket` global :
+      window.socket = socket;
+    })
+      .catch(err => {
+      console.error('Erreur récupération userId:', err);
+    });
     const aggregatedChat = document.getElementById('aggregatedChat');
     const aggregatedChatContent = aggregatedChat.querySelector('.chat-content');
     const distinctChats = document.getElementById('distinctChats');
@@ -567,14 +596,6 @@
       }
     }
 
-    socket.on('chat_message', (data) => {
-      if (isSlowMode) {
-        messageQueue.push(data);
-      } else {
-        processMessage(data);
-      }
-    });
-
     slowModeBtn.addEventListener('click', () => {
       isSlowMode = !isSlowMode;
       slowModeBtn.textContent = isSlowMode ? 'Désactiver Mode Lent' : 'Activer Mode Lent';
@@ -633,13 +654,6 @@
       setTheme(newTheme);
     });
 
-    // Viewer count updates
-    socket.on('viewer_count', (data) => {
-      twitchViewersSpan.textContent = `Twitch: ${data.twitch}`;
-      tiktokViewersSpan.textContent = `TikTok: ${data.tiktok}`;
-      youtubeViewersSpan.textContent = `YouTube: ${data.youtube}`;
-      totalViewersSpan.textContent = `Total: ${data.total}`;
-    });
 
     // Draggable and Resizable logic
     function makeDraggable(element, id) {
