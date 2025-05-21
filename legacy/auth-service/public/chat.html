@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Agrégé</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      transition: background 0.5s ease, color 0.5s ease;
+      position: relative;
+    }
+
+    body.night {
+      background: linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%);
+      color: #ffffff;
+    }
+
+    body.day {
+      background: linear-gradient(135deg, #f0f4ff 0%, #d9e7ff 100%);
+      color: #333333;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: fadeIn 1s ease-in;
+    }
+
+    #controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    #slowModeBtn {
+      background: #ff6b6b;
+      color: #ffffff;
+    }
+
+    #slowModeBtn.active {
+      background: #4ecdc4;
+    }
+
+    #themeToggleBtn {
+      background: #4ecdc4;
+      color: #ffffff;
+    }
+
+    #chatModeBtn {
+      background: #ffaa33;
+      color: #ffffff;
+    }
+
+    #editModeBtn {
+      background: #666;
+      color: #ffffff;
+    }
+
+    #editModeBtn.active {
+      background: #d3d3d3;
+      color: #333333;
+    }
+
+    .platform-toggle {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+      background: #666;
+      color: #ffffff;
+    }
+
+    .platform-toggle.active {
+      background: #4ecdc4;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    #viewerCounts {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 30px;
+      width: 100%;
+      max-width: 800px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease, background 0.5s ease;
+      position: relative;
+      z-index: 10;
+    }
+
+    body.night #viewerCounts {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    body.day #viewerCounts {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    #viewerCounts:hover {
+      transform: translateY(-5px);
+    }
+
+    #viewerCounts span {
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    body.night #viewerCounts span {
+      color: #ffffff;
+    }
+
+    body.day #viewerCounts span {
+      color: #333333;
+    }
+
+    #chatContainer {
+      width: 100%;
+      max-width: 800px;
+      position: relative;
+    }
+
+    .chat-wrapper {
+      position: relative;
+      width: 100%;
+      height: 540px; /* Header (40px) + content (500px) */
+      min-width: 300px;
+      min-height: 240px;
+    }
+
+    .distinct-chat-wrapper {
+      flex: 1;
+      height: 340px; /* Header (40px) + content (300px) */
+      min-width: 200px;
+      min-height: 190px;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      cursor: move;
+      user-select: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      z-index: 5;
+    }
+
+    .chat-header.static {
+      cursor: default;
+    }
+
+    .chat-header img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .chat-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    body.night .chat-header {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.day .chat-header {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    body.night .chat-header h3 {
+      color: #ffffff;
+    }
+
+    body.day .chat-header h3 {
+      color: #333333;
+    }
+
+    .chat-content {
+      border-radius: 0 0 15px 15px;
+      padding: 15px;
+      height: calc(100% - 40px);
+      overflow-y: auto;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      scroll-behavior: smooth;
+      transition: background 0.5s ease, border 0.5s ease;
+      position: absolute;
+      top: 40px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 1px solid transparent;
+    }
+
+    body.night .chat-content {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    body.day .chat-content {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .chat-content::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+    }
+
+    body.night .chat-content::-webkit-scrollbar-thumb {
+      background: #ff6b6b;
+    }
+
+    body.day .chat-content::-webkit-scrollbar-thumb {
+      background: #4ecdc4;
+    }
+
+    .resize-handle {
+      position: absolute;
+      background: #d3d3d3; /* Light gray */
+      opacity: 0.7;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      display: none; /* Hidden by default in static mode */
+    }
+
+    .resize-handle.active {
+      display: block; /* Shown in edit mode */
+    }
+
+    .resize-handle:hover {
+      opacity: 1;
+    }
+
+    .resize-width {
+      width: 10px;
+      height: 100%;
+      right: -5px;
+      top: 0;
+      cursor: ew-resize;
+    }
+
+    .resize-height {
+      height: 10px;
+      width: 100%;
+      bottom: -5px;
+      left: 0;
+      cursor: ns-resize;
+    }
+
+    #distinctChats {
+      display: none;
+      gap: 20px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .message {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      transition: transform 0.3s ease, background 0.3s ease;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    body.night .message {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.day .message {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .message:hover {
+      transform: translateX(5px);
+    }
+
+    body.night .message:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    body.day .message:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .message img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 12px;
+      object-fit: cover;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .message span {
+      font-size: 1rem;
+      word-break: break-word;
+    }
+
+    body.night .message span {
+      color: #e0e0e0;
+    }
+
+    body.day .message span {
+      color: #333333;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      #controls {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #viewerCounts {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .chat-wrapper {
+        height: 440px;
+      }
+
+      .distinct-chat-wrapper {
+        height: 240px;
+      }
+
+      .message img {
+        width: 25px;
+        height: 25px;
+      }
+
+      .resize-width {
+        width: 8px;
+        right: -4px;
+      }
+
+      .resize-height {
+        height: 8px;
+        bottom: -4px;
+      }
+    }
+
+    @media (min-width: 601px) {
+      #distinctChats {
+        display: none;
+        flex-wrap: wrap;
+      }
+
+      .distinct-chat-wrapper {
+        min-width: 250px;
+      }
+    }
+  </style>
+</head>
+<body class="night">
+  <h1>Chat Agrégé (Twitch, TikTok & YouTube)</h1>
+  <div id="controls">
+    <button id="slowModeBtn">Activer Mode Lent</button>
+    <button id="themeToggleBtn">Mode Jour</button>
+    <button id="chatModeBtn">Vue Distincte</button>
+    <button id="editModeBtn">Mode Édition</button>
+    <button id="twitchToggle" class="platform-toggle active">Twitch</button>
+    <button id="tiktokToggle" class="platform-toggle active">TikTok</button>
+    <button id="youtubeToggle" class="platform-toggle active">YouTube</button>
+  </div>
+  <div id="viewerCounts">
+    <span id="twitchViewers">Twitch: 0</span>
+    <span id="tiktokViewers">TikTok: 0</span>
+    <span id="youtubeViewers">YouTube: 0</span>
+    <span id="totalViewers">Total: 0</span>
+  </div>
+  <div id="chatContainer">
+    <div id="aggregatedChat" class="chat-wrapper">
+      <div class="chat-header">
+        <h3>Agrégé</h3>
+      </div>
+      <div class="chat-content"></div>
+      <div class="resize-handle resize-width"></div>
+      <div class="resize-handle resize-height"></div>
+    </div>
+    <div id="distinctChats">
+      <div id="twitchChat" class="distinct-chat-wrapper">
+        <div class="chat-header">
+          <img src="/images/twitch.jpg" alt="Twitch">
+          <h3>Twitch</h3>
+        </div>
+        <div class="chat-content"></div>
+        <div class="resize-handle resize-width"></div>
+        <div class="resize-handle resize-height"></div>
+      </div>
+      <div id="tiktokChat" class="distinct-chat-wrapper">
+        <div class="chat-header">
+          <img src="/images/tiktok.jpg" alt="TikTok">
+          <h3>TikTok</h3>
+        </div>
+        <div class="chat-content"></div>
+        <div class="resize-handle resize-width"></div>
+        <div class="resize-handle resize-height"></div>
+      </div>
+      <div id="youtubeChat" class="distinct-chat-wrapper">
+        <div class="chat-header">
+          <img src="/images/youtube.jpg" alt="YouTube">
+          <h3>YouTube</h3>
+        </div>
+        <div class="chat-content"></div>
+        <div class="resize-handle resize-width"></div>
+        <div class="resize-handle resize-height"></div>
+      </div>
+    </div>
+  </div>
+  <script src="https://localhost:5000/socket.io/socket.io.js"></script>
+<script>
+  fetch('/me')
+      .then(res => res.json())
+      .then(({ userId }) => {
+      const socket = io('https://localhost:5000', {
+      path: '/socket.io',
+      auth: { userId }
+    });
+
+      // ✅ Tout ce qui suit DOIT être à l’intérieur ici
+      socket.on('chat_message', (data) => {
+      if (isSlowMode) {
+      messageQueue.push(data);
+    } else {
+      processMessage(data);
+    }
+    });
+
+      socket.on('viewer_count', (data) => {
+      twitchViewersSpan.textContent = `Twitch: ${data.twitch}`;
+      tiktokViewersSpan.textContent = `TikTok: ${data.tiktok}`;
+      youtubeViewersSpan.textContent = `YouTube: ${data.youtube}`;
+      totalViewersSpan.textContent = `Total: ${data.total}`;
+    });
+
+      // Si tu veux rendre `socket` global :
+      window.socket = socket;
+    })
+      .catch(err => {
+      console.error('Erreur récupération userId:', err);
+    });
+    const aggregatedChat = document.getElementById('aggregatedChat');
+    const aggregatedChatContent = aggregatedChat.querySelector('.chat-content');
+    const distinctChats = document.getElementById('distinctChats');
+    const twitchChat = document.getElementById('twitchChat');
+    const twitchChatContent = twitchChat.querySelector('.chat-content');
+    const tiktokChat = document.getElementById('tiktokChat');
+    const tiktokChatContent = tiktokChat.querySelector('.chat-content');
+    const youtubeChat = document.getElementById('youtubeChat');
+    const youtubeChatContent = youtubeChat.querySelector('.chat-content');
+    const twitchViewersSpan = document.getElementById('twitchViewers');
+    const tiktokViewersSpan = document.getElementById('tiktokViewers');
+    const youtubeViewersSpan = document.getElementById('youtubeViewers');
+    const totalViewersSpan = document.getElementById('totalViewers');
+    const slowModeBtn = document.getElementById('slowModeBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const chatModeBtn = document.getElementById('chatModeBtn');
+    const editModeBtn = document.getElementById('editModeBtn');
+    const twitchToggle = document.getElementById('twitchToggle');
+    const tiktokToggle = document.getElementById('tiktokToggle');
+    const youtubeToggle = document.getElementById('youtubeToggle');
+
+    // Platform icons
+    const icons = {
+      TWITCH: '/images/twitch.jpg',
+      TIKTOK: '/images/tiktok.jpg',
+      YTB: '/images/youtube.jpg',
+      YOUTUBE: '/images/youtube.jpg'
+    };
+
+    // Chat mode and filter states
+    let isAggregatedMode = true;
+    let platformFilters = {
+      TWITCH: true,
+      TIKTOK: true,
+      YOUTUBE: true
+    };
+    let isEditMode = false;
+
+    // Slow Mode logic
+    let isSlowMode = false;
+    let messageQueue = [];
+    const SLOW_MODE_INTERVAL = 2000;
+
+    function displayMessage(data, targetChat) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+      messageDiv.dataset.platform = data.platform;
+
+      const iconImg = document.createElement('img');
+      iconImg.src = icons[data.platform] || '/images/default.jpg';
+      iconImg.alt = data.platform;
+
+      const textSpan = document.createElement('span');
+      textSpan.textContent = data.text;
+
+      messageDiv.appendChild(iconImg);
+      messageDiv.appendChild(textSpan);
+      targetChat.appendChild(messageDiv);
+      targetChat.scrollTop = targetChat.scrollHeight;
+    }
+
+    function processMessage(data) {
+      if (isAggregatedMode) {
+        if (platformFilters[data.platform] || platformFilters[data.platform === 'YTB' ? 'YOUTUBE' : data.platform]) {
+          displayMessage(data, aggregatedChatContent);
+        }
+      } else {
+        const targetChat = data.platform === 'TWITCH' ? twitchChatContent :
+                          data.platform === 'TIKTOK' ? tiktokChatContent :
+                          (data.platform === 'YTB' || data.platform === 'YOUTUBE') ? youtubeChatContent : null;
+        if (targetChat) {
+          displayMessage(data, targetChat);
+        }
+      }
+    }
+
+    function processQueue() {
+      if (messageQueue.length > 0) {
+        processMessage(messageQueue.shift());
+      }
+    }
+
+    slowModeBtn.addEventListener('click', () => {
+      isSlowMode = !isSlowMode;
+      slowModeBtn.textContent = isSlowMode ? 'Désactiver Mode Lent' : 'Activer Mode Lent';
+      slowModeBtn.classList.toggle('active', isSlowMode);
+      if (isSlowMode && messageQueue.length > 0) {
+        processQueue();
+      }
+    });
+
+    setInterval(() => {
+      if (isSlowMode) {
+        processQueue();
+      }
+    }, SLOW_MODE_INTERVAL);
+
+    // Chat mode toggle
+    chatModeBtn.addEventListener('click', () => {
+      isAggregatedMode = !isAggregatedMode;
+      chatModeBtn.textContent = isAggregatedMode ? 'Vue Distincte' : 'Vue Agrégée';
+      aggregatedChat.classList.toggle('hidden', !isAggregatedMode);
+      distinctChats.style.display = isAggregatedMode ? 'none' : 'flex';
+      twitchToggle.classList.toggle('hidden', !isAggregatedMode);
+      tiktokToggle.classList.toggle('hidden', !isAggregatedMode);
+      youtubeToggle.classList.toggle('hidden', !isAggregatedMode);
+      if (!isAggregatedMode) {
+        aggregatedChatContent.innerHTML = '';
+      }
+    });
+
+    // Platform toggle logic
+    function togglePlatform(platform, button) {
+      platformFilters[platform] = !platformFilters[platform];
+      button.classList.toggle('active', platformFilters[platform]);
+      const messages = aggregatedChatContent.querySelectorAll(`.message[data-platform="${platform}"]`);
+      messages.forEach(msg => {
+        msg.classList.toggle('hidden', !platformFilters[platform]);
+      });
+    }
+
+    twitchToggle.addEventListener('click', () => togglePlatform('TWITCH', twitchToggle));
+    tiktokToggle.addEventListener('click', () => togglePlatform('TIKTOK', tiktokToggle));
+    youtubeToggle.addEventListener('click', () => togglePlatform('YOUTUBE', youtubeToggle));
+
+    // Theme toggle logic
+    function setTheme(theme) {
+      document.body.className = theme;
+      themeToggleBtn.textContent = theme === 'night' ? 'Mode Jour' : 'Mode Nuit';
+      localStorage.setItem('theme', theme);
+    }
+
+    const savedTheme = localStorage.getItem('theme') || 'night';
+    setTheme(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const newTheme = document.body.className === 'night' ? 'day' : 'night';
+      setTheme(newTheme);
+    });
+
+
+    // Draggable and Resizable logic
+    function makeDraggable(element, id) {
+      const header = element.querySelector('.chat-header');
+      let isDragging = false;
+      let currentX, currentY, initialX, initialY;
+
+      function startDragging(e) {
+        if (!isEditMode) return;
+        initialX = e.clientX - currentX;
+        initialY = e.clientY - currentY;
+        isDragging = true;
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDragging);
+      }
+
+      function drag(e) {
+        if (isDragging) {
+          e.preventDefault();
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+          element.style.position = 'absolute';
+          element.style.left = `${currentX}px`;
+          element.style.top = `${currentY}px`;
+          savePosition(id, currentX, currentY);
+        }
+      }
+
+      function stopDragging() {
+        isDragging = false;
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDragging);
+      }
+
+      header.addEventListener('mousedown', startDragging);
+
+      // Load saved position
+      const saved = localStorage.getItem(`chatPosition_${id}`);
+      if (saved) {
+        const { x, y } = JSON.parse(saved);
+        currentX = x;
+        currentY = y;
+        element.style.position = 'absolute';
+        element.style.left = `${x}px`;
+        element.style.top = `${y}px`;
+      } else {
+        currentX = 0;
+        currentY = 0;
+      }
+
+      return { startDragging }; // Return for toggle control
+    }
+
+    function savePosition(id, x, y) {
+      localStorage.setItem(`chatPosition_${id}`, JSON.stringify({ x, y }));
+    }
+
+    function makeResizable(element, id) {
+      const widthHandle = element.querySelector('.resize-width');
+      const heightHandle = element.querySelector('.resize-height');
+      let isResizingWidth = false;
+      let isResizingHeight = false;
+      let initialX, initialY, initialWidth, initialHeight;
+
+      function startWidthResize(e) {
+        if (!isEditMode) return;
+        initialX = e.clientX;
+        initialWidth = element.offsetWidth;
+        isResizingWidth = true;
+        document.addEventListener('mousemove', resizeWidth);
+        document.addEventListener('mouseup', stopResize);
+      }
+
+      function startHeightResize(e) {
+        if (!isEditMode) return;
+        initialY = e.clientY;
+        initialHeight = element.offsetHeight;
+        isResizingHeight = true;
+        document.addEventListener('mousemove', resizeHeight);
+        document.addEventListener('mouseup', stopResize);
+      }
+
+      function resizeWidth(e) {
+        if (isResizingWidth) {
+          e.preventDefault();
+          const deltaX = e.clientX - initialX;
+          let newWidth = Math.max(300, Math.min(initialWidth + deltaX, window.innerWidth));
+          element.style.width = `${newWidth}px`;
+          saveSize(id, newWidth, element.offsetHeight);
+        }
+      }
+
+      function resizeHeight(e) {
+        if (isResizingHeight) {
+          e.preventDefault();
+          const deltaY = e.clientY - initialY;
+          let newHeight = Math.max(240, Math.min(initialHeight + deltaY, window.innerHeight * 0.8));
+          element.style.height = `${newHeight}px`;
+          saveSize(id, element.offsetWidth, newHeight);
+        }
+      }
+
+      function stopResize() {
+        isResizingWidth = false;
+        isResizingHeight = false;
+        document.removeEventListener('mousemove', resizeWidth);
+        document.removeEventListener('mousemove', resizeHeight);
+        document.removeEventListener('mouseup', stopResize);
+      }
+
+      widthHandle.addEventListener('mousedown', startWidthResize);
+      heightHandle.addEventListener('mousedown', startHeightResize);
+
+      // Load saved size
+      const saved = localStorage.getItem(`chatSize_${id}`);
+      if (saved) {
+        const { width, height } = JSON.parse(saved);
+        element.style.width = `${width}px`;
+        element.style.height = `${height}px`;
+      }
+
+      return { startWidthResize, startHeightResize }; // Return for toggle control
+    }
+
+    function saveSize(id, width, height) {
+      localStorage.setItem(`chatSize_${id}`, JSON.stringify({ width, height }));
+    }
+
+    // Initialize draggable and resizable with toggle control
+    const chats = [
+      { element: aggregatedChat, id: 'aggregated' },
+      { element: twitchChat, id: 'twitch' },
+      { element: tiktokChat, id: 'tiktok' },
+      { element: youtubeChat, id: 'youtube' }
+    ];
+
+    const draggableControls = chats.map(chat => makeDraggable(chat.element, chat.id));
+    const resizableControls = chats.map(chat => makeResizable(chat.element, chat.id));
+
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      editModeBtn.textContent = isEditMode ? 'Mode Statique' : 'Mode Édition';
+      editModeBtn.classList.toggle('active', isEditMode);
+
+      // Toggle resize handles visibility
+      document.querySelectorAll('.resize-handle').forEach(handle => {
+        handle.classList.toggle('active', isEditMode);
+      });
+
+      // Toggle header cursor
+      document.querySelectorAll('.chat-header').forEach(header => {
+        header.classList.toggle('static', !isEditMode);
+      });
+    }
+
+    editModeBtn.addEventListener('click', toggleEditMode);
+
+    // Start in static mode
+    toggleEditMode();
+  </script>
+</body>
+</html>
