@@ -1,0 +1,421 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
+
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  position: relative;
+  transition: all 0.3s ease;
+  
+  &.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    z-index: 9999;
+    border-radius: 0;
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPjwvc3ZnPg==');
+    opacity: 0.05;
+    pointer-events: none;
+  }
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+  
+  .chat-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    flex: 1;
+    background: linear-gradient(90deg, #9333ea, #4f46e5, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.platform-toggles {
+  display: flex;
+  gap: 8px;
+}
+
+.platform-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  &.active {
+    color: white;
+  }
+  
+  &.twitch.active {
+    background: #9146FF;
+    box-shadow: 0 0 10px rgba(145, 70, 255, 0.5);
+  }
+  
+  &.youtube.active {
+    background: #FF0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+  }
+  
+  &.tiktok.active {
+    background: linear-gradient(90deg, #25F4EE, #FE2C55);
+    box-shadow: 0 0 10px rgba(254, 44, 85, 0.5);
+  }
+}
+
+.chat-controls {
+  .control-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
+
+.chat-message {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px;
+  position: relative;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
+  }
+  
+  &.highlighted {
+    background: rgba(255, 255, 255, 0.15);
+    border-left-color: gold;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+  }
+  
+  &.platform-twitch {
+    border-left-color: #9146FF;
+  }
+  
+  &.platform-youtube {
+    border-left-color: #FF0000;
+  }
+  
+  &.platform-tiktok {
+    border-left-color: #FE2C55;
+  }
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.platform-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-size: 12px;
+  
+  .fa-twitch {
+    color: #9146FF;
+  }
+  
+  .fa-youtube {
+    color: #FF0000;
+  }
+  
+  .fa-tiktok {
+    color: #25F4EE;
+  }
+}
+
+.username {
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  margin-right: auto;
+}
+
+.timestamp {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.message-content {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.donation-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  background: linear-gradient(90deg, #FFD700, #FFA500);
+  color: #000;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  
+  i {
+    margin-right: 3px;
+  }
+}
+
+.message-actions {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  z-index: 5;
+}
+
+.selected-message {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 6px;
+  
+  .message-preview {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  
+  &::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
+
+.action-button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  
+  i {
+    font-size: 12px;
+  }
+  
+  &.pin {
+    background: #4338ca;
+    color: white;
+    
+    &:hover {
+      background: #3730a3;
+    }
+  }
+  
+  &.ban {
+    background: #dc2626;
+    color: white;
+    
+    &:hover {
+      background: #b91c1c;
+    }
+  }
+  
+  &.reply {
+    background: #0891b2;
+    color: white;
+    
+    &:hover {
+      background: #0e7490;
+    }
+  }
+  
+  &.dismiss {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+.chat-footer {
+  padding: 10px 15px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.platform-stats {
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  
+  i {
+    font-size: 16px;
+  }
+  
+  .count {
+    font-weight: 600;
+  }
+  
+  &.twitch {
+    color: #9146FF;
+  }
+  
+  &.youtube {
+    color: #FF0000;
+  }
+  
+  &.tiktok {
+    color: #25F4EE;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.donation-badge {
+  animation: pulse 2s infinite;
+}
+
+.platform-button.active {
+  animation: float 3s ease-in-out infinite;
+}

@@ -1,0 +1,91 @@
+<div class="chat-wrapper" [class.fullscreen]="isFullscreen">
+  <div class="chat-header">
+    <div class="platform-toggles">
+      <button 
+        [class.active]="activePlatforms.twitch" 
+        class="platform-button twitch"
+        (click)="togglePlatform('twitch')">
+        <i class="fab fa-twitch"></i>
+      </button>
+      <button 
+        [class.active]="activePlatforms.youtube" 
+        class="platform-button youtube"
+        (click)="togglePlatform('youtube')">
+        <i class="fab fa-youtube"></i>
+      </button>
+      <button 
+        [class.active]="activePlatforms.tiktok" 
+        class="platform-button tiktok"
+        (click)="togglePlatform('tiktok')">
+        <i class="fab fa-tiktok"></i>
+      </button>
+    </div>
+    <h2 class="chat-title">Multi-Platform Chat</h2>
+    <div class="chat-controls">
+      <button class="control-button" (click)="toggleFullscreen()">
+        <i class="fas" [class.fa-expand]="!isFullscreen" [class.fa-compress]="isFullscreen"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-container" #chatContainer>
+    <div *ngFor="let message of messages" 
+         class="chat-message" 
+         [class.highlighted]="message.highlighted"
+         [class]="getPlatformColor(message.platform)"
+         [@messageAnimation]
+         (click)="highlightMessage(message)">
+      <div class="message-header">
+        <div class="platform-indicator">
+          <i [class]="getPlatformIcon(message.platform)"></i>
+        </div>
+        <div class="username">{{ message.username }}</div>
+        <div class="timestamp">{{ message.timestamp }}</div>
+      </div>
+      <div class="message-content">
+        {{ message.message }}
+      </div>
+      <div *ngIf="message.donation" class="donation-badge">
+        <i class="fas fa-gift"></i> ${{ message.donation }}
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="selectedMessage" class="message-actions">
+    <div class="selected-message">
+      <div class="platform-indicator">
+        <i [class]="getPlatformIcon(selectedMessage!.platform)"></i>
+      </div>
+      <div class="username">{{ selectedMessage!.username }}</div>
+      <div class="message-preview">{{ selectedMessage!.message }}</div>
+    </div>
+    <div class="action-buttons">
+      <button class="action-button pin" (click)="pinMessage(selectedMessage!)">
+        <i class="fas fa-thumbtack"></i> Pin
+      </button>
+      <button class="action-button ban" (click)="banUser(selectedMessage!.username)">
+        <i class="fas fa-ban"></i> Ban
+      </button>
+      <button class="action-button reply">
+        <i class="fas fa-reply"></i> Reply
+      </button>
+      <button class="action-button dismiss" (click)="dismissHighlight()">
+        <i class="fas fa-times"></i> Dismiss
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-footer">
+    <div class="platform-stats">
+      <div class="stat twitch">
+        <i class="fab fa-twitch"></i>
+      </div>
+      <div class="stat youtube">
+        <i class="fab fa-youtube"></i>
+      </div>
+      <div class="stat tiktok">
+        <i class="fab fa-tiktok"></i>
+      </div>
+    </div>
+  </div>
+</div>
