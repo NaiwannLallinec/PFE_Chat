@@ -85,6 +85,12 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
+@app.get("/users/streamers", response_model=List[UserRead])
+def read_streamers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    streamers = db.query(User).filter(User.is_viewer == False).offset(skip).limit(limit).all()
+    return streamers
+
+
 @app.get("/users/{user_id}", response_model=UserRead)
 def read_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).get(user_id)
