@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-DATABASE_URL = os.getenv("DB_URL")
+DATABASE_URL = "postgres://user:password@localhost:5432/mydatabase"
 if not DATABASE_URL:
     raise RuntimeError("DB_URL environment variable is not set")
 # Fix SQLAlchemy dialect prefix if needed
