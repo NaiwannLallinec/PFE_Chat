@@ -3,7 +3,7 @@
 <div class="auth-box">
   <h2>Connecte tes plateformes</h2>
 
-  <form>
+ <form (ngSubmit)="submitForm()" #streamForm="ngForm">
     <div class="field icon-field">
       <i class="fab fa-twitch"></i>
       <input type="text" placeholder="Nom d'utilisateur Twitch" [(ngModel)]="twitch_channel" name="twitch_channel" />
