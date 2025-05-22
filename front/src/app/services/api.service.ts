@@ -2,6 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface User {
+  id: number;
+  username: string;
+  twitch_channel?: string;
+  youtube_live_chat_id?: string;
+  youtube_video_id?: string;
+  tiktok_username?: string;
+  is_viewer ?: boolean;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: 'bearer';
@@ -27,9 +37,13 @@ export interface RegisterPayload {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = "http://localhost:8000/api"
+  private readonly baseUrl = "http://localhost:8000"
 
   constructor(private http: HttpClient) {}
+  
+   getStreamers(): Observable<User[]> {
+    return this.http.get<User[]>(this.baseUrl);
+  }
 
   login(payload: LoginPayload): Observable<TokenResponse> {
     const body = new HttpParams()
@@ -46,4 +60,5 @@ export class ApiService {
   register(payload: RegisterPayload): Observable<UserRead> {
     return this.http.post<UserRead>(`${this.baseUrl}/register`, payload);
   }
+
 }
