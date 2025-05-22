@@ -2,6 +2,7 @@
 DOC/
 env/
 node_modules/
+venv/
 
 # Fichiers
 RapportSem1.pdf

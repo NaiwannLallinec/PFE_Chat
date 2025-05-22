@@ -1,1 +1,54 @@
-<p>login works!</p>
+<h1 class="app-title">PFE CHAT</h1>
+
+<section class="auth-box">
+  <h2>{{ isLoginMode ? 'Connexion' : 'Inscription' }}</h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <!-- USERNAME -->
+    <div class="field">
+      <label>Nom d’utilisateur</label>
+      <input formControlName="username" />
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" formControlName="password" />
+    </div>
+
+    <!-- CONFIRM (inscription) -->
+    <div class="field" *ngIf="!isLoginMode">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" formControlName="confirmPassword" />
+    </div>
+
+    <!-- STREAMER (mode inscription uniquement) -->
+    <div class="field checkbox" *ngIf="!isLoginMode">
+      <label class="chk">
+        <input type="checkbox" formControlName="streamer" />
+        <span>Je suis streamer</span>
+      </label>
+    </div>
+
+    <p
+      *ngIf="message"
+      [ngClass]="{
+        error: messageType === 'error',
+        success: messageType === 'success'
+      }"
+    >
+      {{ message }}
+    </p>
+
+    <button type="submit">
+      {{ isLoginMode ? 'Se connecter' : 'S’inscrire' }}
+    </button>
+  </form>
+
+  <p class="toggle">
+    {{ isLoginMode ? 'Pas encore de compte ?' : 'Déjà inscrit ?' }}
+    <a href="#" (click)="switchMode(); $event.preventDefault()">
+      {{ isLoginMode ? 'Créer un compte.' : 'Se connecter.' }}
+    </a>
+  </p>
+</section>
