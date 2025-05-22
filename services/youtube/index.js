@@ -30,10 +30,11 @@ await mqChannel.assertQueue('chat-messages', { durable: true });
 async function createYouTubeConnection(liveChatId, videoId) {
   const users = new Set();
   let lastActivity = Date.now();
+  let pageToken = null;
 
   console.log(`[YOUTUBE] Connexion au live ${videoId} / chatId: ${liveChatId}`);
 
-  const token = 'ya29.a0AW4XtxgYW5Vp6MHP_o1jz-aJvxrRnhv9MbsPc7kza9d9abPQYqzcEycUigPq6FpabDSNqgPwD5WJvz0_1L4HKn-hCPyqTsI0NNjqh-qzsNstp8Cnh5lMh5IkPf2g8HxNdj4FVAzd60c5iN4ZM_tzLPJmUw4pTQ6qUzf9MwNhaCgYKAXYSARESFQHGX2MiyhioIrDJ1mOLbTVcbxI6MQ0175';
+  const token = 'ya29.a0AW4XtxiH03rt09pUVuy348OWBBMqCJyESXNwcY5x4U8ubxvUaKzDlTCtT8r6SscVgK5kO_M-W4IND9hvAzc6dHcnL4ePGOnjwAQPl18pfNzROARzM9UbDTW3-fVe21C-CtP6bKN44xD7jT7mpAKp-XX8GLPV2KWNyKK66JgLaCgYKAQMSARESFQHGX2MijNm0ksAmw2wovFYyRs6mZg0175';
   async function pollChat() {
     try {
       const url = `https://www.googleapis.com/youtube/v3/liveChat/messages`
