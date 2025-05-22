@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-
+@Injectable({
+  providedIn: 'root'
+})
 export interface User {
   id: number;
   username: string;
@@ -12,11 +14,6 @@ export interface User {
   tiktok_username?: string;
   is_viewer ?: boolean;
 }
-
-@Injectable({
-  providedIn: 'root'
-})
-
 export class ApiService {
 
   private baseUrl = 'http://localhost:8000/users/streamers'; // adapte selon ton backend
