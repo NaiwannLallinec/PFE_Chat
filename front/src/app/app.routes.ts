@@ -4,10 +4,11 @@ import { LoginComponent } from './components/login/login.component';
 import { VisuelComponent } from './components/visuel/visuel.component';
 
 export const routes: Routes = [
-    { path: '', component: LoginComponent },
-    { path: 'chat', component: TchatComponent },
     { path: 'login', component: LoginComponent },
-        { path: 'test', component: VisuelComponent },
+    { path: 'register', component: LoginComponent, data: { mode: 'register' } },
 
-    { path: '**', redirectTo: '' }
+    { path: 'chat', component: TchatComponent },
+    { path: 'test', component: VisuelComponent },
+    
+    { path: '**', redirectTo: 'login' }
 ];
