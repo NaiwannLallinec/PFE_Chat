@@ -37,7 +37,7 @@ export interface RegisterPayload {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = "http://localhost:8000"
+  private readonly baseUrl = "http://localhost:8000/api"
 
   constructor(private http: HttpClient) {}
   
