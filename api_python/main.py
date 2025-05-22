@@ -125,6 +125,7 @@ class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user_id: int
+    is_viewer: bool
 
 app = FastAPI()
 
@@ -222,6 +223,7 @@ def login(
         "access_token": token,
         "token_type": "bearer",
         "user_id": user.id,
+        "is_viewer": user.is_viewer,
     }
 
 

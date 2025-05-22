@@ -17,6 +17,8 @@ export class LoginComponent implements OnInit {
   isLoginMode = true;          // true = connexion, false = inscription
   form!: FormGroup;
   errorMsg = '';
+  message = '';
+  messageType: 'success' | 'error' | '' = ''; 
 
   constructor(
     private fb: FormBuilder,
@@ -72,8 +74,12 @@ export class LoginComponent implements OnInit {
         next: (tok) => {
           localStorage.setItem('token', tok.access_token);
           sessionStorage.setItem('user_id', tok.user_id.toString());
-          this.router.navigateByUrl('/');
-        },
+          if (tok.is_viewer) {
+            this.router.navigateByUrl('/home-viewer');
+          } else {
+            this.router.navigateByUrl('/setup-streamer');
+          }
+        },          
         error: () => (this.errorMsg = 'Identifiants incorrects'),
       });
       return;
@@ -90,7 +96,8 @@ export class LoginComponent implements OnInit {
         this.isLoginMode = true;      // repasse en mode login
         this.toggleValidators();
         this.form.reset({ username, password: '' });
-        this.errorMsg = 'Inscription réussie ! Connectez-vous 😉';
+        this.message= 'Inscription réussie ! Connectez-vous 😉';
+        this.messageType = 'success';
       },
       error: (err) => {
         this.errorMsg =
