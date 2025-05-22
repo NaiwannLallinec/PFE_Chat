@@ -5,10 +5,9 @@ import { VisuelComponent } from './components/visuel/visuel.component';
 import { SetupStreamerComponent } from './components/setup-streamer/setup-streamer.component';
 
 export const routes: Routes = [
-    { path: '', component: LoginComponent },
-    { path: 'chat', component: TchatComponent },
     { path: 'login', component: LoginComponent },
-    {path: 'setup-streamer',component: SetupStreamerComponent},
+    { path: 'register', component: LoginComponent, data: { mode: 'register' } },
+    { path: 'setup-streamer',component: SetupStreamerComponent},
     { path: 'tchat', component: TchatComponent},
     { path: 'test', component: VisuelComponent },
     { path: '**', redirectTo: '' }
