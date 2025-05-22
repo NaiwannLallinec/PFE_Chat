@@ -37,12 +37,12 @@ export interface RegisterPayload {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = "http://localhost:8000/api"
+  private readonly baseUrl = "http://localhost:8000"
 
   constructor(private http: HttpClient) {}
   
    getStreamers(): Observable<User[]> {
-    return this.http.get<User[]>(this.baseUrl);
+    return this.http.get<User[]>(`${this.baseUrl}/users/streamers`);
   }
 
   login(payload: LoginPayload): Observable<TokenResponse> {

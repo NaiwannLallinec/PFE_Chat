@@ -159,6 +159,8 @@ app.add_middleware(
 # -------------------------------------------------------------------------
 # ROUTES CRUD « historiques »  (/users…)
 # -------------------------------------------------------------------------
+api = APIRouter()
+
 @app.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
@@ -214,8 +216,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 # -------------------------------------------------------------------------
 # ROUTER AUTH (/api/...)
 # -------------------------------------------------------------------------
-api = APIRouter(prefix="/api", tags=["auth"])
-
 
 @api.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
