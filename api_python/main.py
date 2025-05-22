@@ -1,16 +1,22 @@
 # main.py
 import os
-from datetime import datetime
 
+from typing import List
+from typing import Optional
+import re
+from datetime import datetime
 from datetime import datetime, timedelta
 from typing import List, Generator
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, constr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text, create_engine
+
+from sqlalchemy import Column, Integer, String, TIMESTAMP, text, create_engine, Boolean, DateTime
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+
 import asyncio
 import aio_pika
 import json
@@ -63,6 +69,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 
+
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
@@ -76,6 +83,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
+    twitch_channel = Column(String)  # ✅ ce champ doit exister ici
+    youtube_live_chat_id = Column(String)
+    youtube_video_id = Column(String)
+    tiktok_username = Column(String)
     is_viewer    = Column(Boolean, nullable=False, server_default=text("TRUE"))  # <-- NEW
     created_at = Column(
         TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False
@@ -111,11 +122,18 @@ class UserCreate(BaseModel):
     streamer: bool
 
 
+
 class UserRead(BaseModel):
     user_id: int = Field(alias="id")
     username: str
+    password_hash: str
+    twitch_channel: Optional[str] = None
+    youtube_live_chat_id: Optional[str] = None
+    youtube_video_id: Optional[str] = None
+    tiktok_username: Optional[str] = None
     is_viewer: bool
     created_at: datetime
+      
     class Config:
         orm_mode = True
         allow_population_by_field_name = True
@@ -125,6 +143,7 @@ class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user_id: int
+    is_viewer: bool
 
 app = FastAPI()
 
@@ -141,6 +160,7 @@ app.add_middleware(
 # ROUTES CRUD « historiques »  (/users…)
 # -------------------------------------------------------------------------
 @app.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == user_in.username).first():
         raise HTTPException(status_code=409, detail="Username already registered")
@@ -154,6 +174,12 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
 @app.get("/users", response_model=List[UserRead])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db.query(User).offset(skip).limit(limit).all()
+
+
+@app.get("/users/streamers", response_model=List[UserRead])
+def read_streamers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    streamers = db.query(User).filter(User.is_viewer == False).offset(skip).limit(limit).all()
+    return streamers
 
 
 @app.get("/users/{user_id}", response_model=UserRead)
@@ -222,6 +248,7 @@ def login(
         "access_token": token,
         "token_type": "bearer",
         "user_id": user.id,
+        "is_viewer": user.is_viewer,
     }
 
 

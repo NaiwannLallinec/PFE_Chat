@@ -3,12 +3,14 @@ import { TchatComponent } from './components/tchat/tchat.component';
 import { LoginComponent } from './components/login/login.component';
 import { VisuelComponent } from './components/visuel/visuel.component';
 import { SetupStreamerComponent } from './components/setup-streamer/setup-streamer.component';
+import { HomeViewerComponent } from './components/home-viewer/home-viewer.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
     { path: 'register', component: LoginComponent, data: { mode: 'register' } },
     { path: 'setup-streamer',component: SetupStreamerComponent},
+    { path: 'home-viewer', component: HomeViewerComponent },
     { path: 'tchat', component: TchatComponent},
     { path: 'test', component: VisuelComponent },
-    { path: '**', redirectTo: '' }
+    { path: '**', redirectTo: 'login' }
 ];
