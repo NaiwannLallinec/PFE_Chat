@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
+
+/* ------------------------
+   Page & fond général
+------------------------ */
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ------------------------
+   Titre principal animé
+------------------------ */
+.app-title {
+  margin: 0 0 40px;
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(90deg, #ff8a00, #e52e71, #9b00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: float 3s ease-in-out infinite;
+  letter-spacing: 1px;
+}
+
+/* ------------------------
+   Boîte principale du formulaire
+------------------------ */
+.auth-box {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(30px);
+  border-radius: 16px;
+  padding: 40px 32px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPjwvc3ZnPg==');
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+/* ------------------------
+   Titre du formulaire
+------------------------ */
+.auth-box h2 {
+  margin: 0 0 24px;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  background: linear-gradient(90deg, #9333ea, #4f46e5, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ------------------------
+   Champs du formulaire
+------------------------ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.field label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.field input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #06b6d4;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.35);
+}
+
+/* ------------------------
+   Bouton principal
+------------------------ */
+button[type="submit"] {
+  width: 100%;
+  padding: 12px 0;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(90deg, #9333ea, #4f46e5, #06b6d4);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-size: 15px;
+}
+
+button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  animation: pulse 1.6s forwards;
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Champs avec icône à gauche */
+.icon-field {
+  position: relative;
+}
+
+.icon-field i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.icon-field input {
+  padding-left: 42px;
+}
