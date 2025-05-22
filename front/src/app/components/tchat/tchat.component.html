@@ -1,1 +1,85 @@
-<p>that works!</p>
+<div class="chat-wrapper">
+  <div class="chat-header">
+    <h2 class="chat-title">Tchat Agrégé</h2>
+    <div class="chat-controls">
+  <input
+    type="text"
+    [(ngModel)]="tiktokName"
+    placeholder="Nom TikTok live"
+  />
+  <button (click)="startWatchingTikTok()">Connecter</button>
+</div>
+<div class="chat-controls">
+  <input
+    type="text"
+    [(ngModel)]="youtubeVideoId"
+    placeholder="YouTube video ID"
+  />
+  <input
+    type="text"
+    [(ngModel)]="youtubeChatId"
+    placeholder="Live chat ID"
+  />
+  <button (click)="startWatchingYouTube()">YouTube</button>
+</div>
+
+
+    <div class="chat-controls">
+      <input
+        type="text"
+        [(ngModel)]="streamName"
+        placeholder="Nom du stream Twitch"
+      />
+      <button (click)="startWatching()">Regarder</button>
+    </div>
+    <div class="platform-toggles">
+      <button class="platform-button twitch" [class.active]="platformFilters.TWITCH" (click)="togglePlatform('TWITCH')">
+        <i class="fab fa-twitch"></i>
+      </button>
+      <button class="platform-button tiktok" [class.active]="platformFilters.TIKTOK" (click)="togglePlatform('TIKTOK')">
+        <i class="fab fa-tiktok"></i>
+      </button>
+      <button class="platform-button youtube" [class.active]="platformFilters.YOUTUBE" (click)="togglePlatform('YOUTUBE')">
+        <i class="fab fa-youtube"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-container">
+    <div *ngFor="let msg of messages" class="chat-message" [ngClass]="'platform-' + msg.platform.toLowerCase()">
+      <div class="message-header">
+        <div class="platform-indicator">
+          <i [ngClass]="{
+            'fab fa-twitch': msg.platform === 'TWITCH',
+            'fab fa-youtube': msg.platform === 'YOUTUBE',
+            'fab fa-tiktok': msg.platform === 'TIKTOK'
+          }"></i>
+        </div>
+        <span class="username">{{ msg.text.split(':')[0] }}</span>
+        <span class="timestamp">{{ now | date:'shortTime' }}</span>
+      </div>
+      <div class="message-content">{{ msg.text.split(':').slice(1).join(':') }}</div>
+    </div>
+  </div>
+
+  <div class="chat-footer">
+    <div class="platform-stats">
+      <div class="stat twitch">
+        <i class="fab fa-twitch"></i>
+        <span class="count">{{ viewerCounts.twitch }}</span>
+      </div>
+      <div class="stat tiktok">
+        <i class="fab fa-tiktok"></i>
+        <span class="count">{{ viewerCounts.tiktok }}</span>
+      </div>
+      <div class="stat youtube">
+        <i class="fab fa-youtube"></i>
+        <span class="count">{{ viewerCounts.youtube }}</span>
+      </div>
+      <div class="stat">
+        <i class="fas fa-users"></i>
+        <span class="count">{{ viewerCounts.total }}</span>
+      </div>
+    </div>
+  </div>
+</div>

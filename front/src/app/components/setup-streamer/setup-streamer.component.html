@@ -1,1 +1,32 @@
-<p>setup-streamer works!</p>
+<h1 class="app-title">Paramètres du Streamer</h1>
+
+<div class="auth-box">
+  <h2>Connecte tes plateformes</h2>
+
+  <form>
+    <div class="field icon-field">
+      <i class="fab fa-twitch"></i>
+      <input type="text" placeholder="Nom d'utilisateur Twitch" [(ngModel)]="twitch_channel" name="twitch_channel" />
+    </div>
+
+    <div class="field icon-field">
+      <i class="fab fa-tiktok"></i>
+      <input type="text" placeholder="Nom d'utilisateur TikTok" [(ngModel)]="tiktok_username" name="tiktok_username" />
+    </div>
+
+        <div class="field icon-field">
+      <i class="fab fa-youtube"></i>
+      <input type="text" placeholder="ID du Chat YouTube" [(ngModel)]="youtube_live_chat_id" name="youtube_live_chat_id" />
+    </div>
+
+    <div class="field icon-field">
+      <i class="fas fa-video"></i>
+      <input type="text" placeholder="ID de la Vidéo YouTube" [(ngModel)]="youtube_video_id" name="youtube_video_id" />
+    </div>
+
+    <button type="submit">
+      <i class="fas fa-save" style="margin-right: 8px;"></i>
+      Sauvegarder et continuer 
+    </button>
+  </form>
+</div>
