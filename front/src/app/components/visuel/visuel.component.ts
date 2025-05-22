@@ -1,7 +1,8 @@
 
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, NgModule } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 interface ChatMessage {
   id: number;
@@ -18,6 +19,8 @@ interface ChatMessage {
   selector: 'app-visuel',
   templateUrl: './visuel.component.html',
   styleUrl: './visuel.component.css',
+  standalone: true,
+  imports: [CommonModule],
   animations: [
     trigger('messageAnimation', [
       transition(':enter', [
@@ -38,7 +41,7 @@ export class VisuelComponent implements OnInit, AfterViewInit {
   };
   
   selectedMessage: ChatMessage | null = null;
-  isFullscreen = false;
+  isFullscreen = true;
   
   // Mock data for demonstration
   mockUsers = {

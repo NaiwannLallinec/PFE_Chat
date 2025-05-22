@@ -8,7 +8,8 @@ export const routes: Routes = [
     { path: '', component: LoginComponent },
     { path: 'chat', component: TchatComponent },
     { path: 'login', component: LoginComponent },
-    { path: 'test', component: VisuelComponent },
     {path: 'setup-streamer',component: SetupStreamerComponent},
+    { path: 'tchat', component: TchatComponent},
+    { path: 'test', component: VisuelComponent },
     { path: '**', redirectTo: '' }
 ];
