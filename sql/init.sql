@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   youtube_live_chat_id TEXT,
   youtube_video_id     TEXT,
   tiktok_username      TEXT,
-  is_viewer            BOOLEAN,
+  is_viewer            BOOLEAN
 );
 
 INSERT INTO users (id, username, password_hash)

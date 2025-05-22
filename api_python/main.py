@@ -1,16 +1,18 @@
 import os
 from typing import List
+from typing import Optional
 import re
 from datetime import datetime
 
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel, constr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, text, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import create_engine
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 load_dotenv()
@@ -30,28 +32,40 @@ Base = declarative_base()
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# SQLAlchemy User model
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False, index=True)
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), server_default=text('NOW()'), nullable=False)
+    twitch_channel = Column(String)  # ✅ ce champ doit exister ici
+    youtube_live_chat_id = Column(String)
+    youtube_video_id = Column(String)
+    tiktok_username = Column(String)
+    is_viewer = Column(Boolean)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 # Pydantic schemas
 class UserCreate(BaseModel):
     username: constr(min_length=3, max_length=50)
     password: constr(min_length=6)
 
+
 class UserRead(BaseModel):
     id: int
     username: str
+    password_hash: str
+    twitch_channel: Optional[str] = None
+    youtube_live_chat_id: Optional[str] = None
+    youtube_video_id: Optional[str] = None
+    tiktok_username: Optional[str] = None
+    is_viewer: bool
     created_at: datetime
 
     class Config:
-        orm_mode = True
-
+        orm_mode = True  # Pydantic v1
+        
+        
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
@@ -67,6 +81,14 @@ app = FastAPI()
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],  # ou ["*"] en dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # CRUD operations
 @app.post("/users", response_model=UserRead, status_code=201)
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
