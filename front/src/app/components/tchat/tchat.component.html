@@ -1,37 +1,8 @@
 <div class="chat-wrapper">
+
   <div class="chat-header">
     <h2 class="chat-title">Tchat Agrégé</h2>
-    <div class="chat-controls">
-  <input
-    type="text"
-    [(ngModel)]="tiktokName"
-    placeholder="Nom TikTok live"
-  />
-  <button (click)="startWatchingTikTok()">Connecter</button>
-</div>
-<div class="chat-controls">
-  <input
-    type="text"
-    [(ngModel)]="youtubeVideoId"
-    placeholder="YouTube video ID"
-  />
-  <input
-    type="text"
-    [(ngModel)]="youtubeChatId"
-    placeholder="Live chat ID"
-  />
-  <button (click)="startWatchingYouTube()">YouTube</button>
-</div>
 
-
-    <div class="chat-controls">
-      <input
-        type="text"
-        [(ngModel)]="streamName"
-        placeholder="Nom du stream Twitch"
-      />
-      <button (click)="startWatching()">Regarder</button>
-    </div>
     <div class="platform-toggles">
       <button class="platform-button twitch" [class.active]="platformFilters.TWITCH" (click)="togglePlatform('TWITCH')">
         <i class="fab fa-twitch"></i>
@@ -43,6 +14,18 @@
         <i class="fab fa-youtube"></i>
       </button>
     </div>
+  </div>
+
+  <div class="chat-controls">
+    <input [(ngModel)]="streamName" placeholder="Nom Twitch" />
+    <button (click)="startTwitch()">▶ Twitch</button>
+
+    <input [(ngModel)]="tiktokName" placeholder="Username TikTok" />
+    <button (click)="startTikTok()">▶ TikTok</button>
+
+    <input [(ngModel)]="ytChatId" placeholder="Live Chat ID YouTube" />
+    <input [(ngModel)]="ytVideoId" placeholder="Video ID YouTube" />
+    <button (click)="startYouTube()">▶ YouTube</button>
   </div>
 
   <div class="chat-container">
@@ -82,4 +65,5 @@
       </div>
     </div>
   </div>
+
 </div>

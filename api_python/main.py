@@ -1,12 +1,14 @@
 # main.py
 import os
+from datetime import datetime
+
 from datetime import datetime, timedelta
 from typing import List, Generator
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, constr
 from sqlalchemy import Column, Integer, String, TIMESTAMP, text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 import asyncio
@@ -227,35 +229,17 @@ app.include_router(api)
 
 # CRUD endpoints omitted for brevity (same as before)
 
-
-async def consume_rabbit():
-    connection = await aio_pika.connect_robust(os.getenv("AMQP_URL", "amqp://user:password@localhost/"))
-    channel = await connection.channel()
-    queue = await channel.declare_queue("chat-messages", durable=True)
-
-    async with queue.iterator() as queue_iter:
-        async for message in queue_iter:
-            async with message.process():
-                payload = json.loads(message.body.decode())
-                print("[RabbitMQ] reçu :", payload)  # 👈 LOG ICI
-                if payload["type"] == "chat":
-                    push_chat_message(payload)
-                elif payload["type"] == "viewers":
-                    push_viewer_counts(payload)
-
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(consume_rabbit())
-
-# WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
+
     async def broadcast(self, message: dict):
         for connection in list(self.active_connections):
             try:
@@ -273,18 +257,6 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-
-# Helper functions for pushing from main process
-def push_chat_message(payload: dict):
-    import asyncio
-    print("[WS] push_chat_message →", payload)  # 👈 LOG ICI
-    asyncio.create_task(manager.broadcast({
-        "type": "chat_message",
-        "payload": payload
-    }))
-def push_viewer_counts(payload: dict):
-    import asyncio
-    asyncio.create_task(manager.broadcast({"type": "viewer_count", "payload": payload}))
 
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
