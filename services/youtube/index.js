@@ -3,6 +3,8 @@ import amqp from 'amqplib';
 import fetch from 'node-fetch';
 import 'dotenv/config';
 import { getValidToken } from '../../shared/tokenManager.js';
+import cors from 'cors';
+
 
 const {
   AMQP_URL = 'amqp://localhost',
@@ -10,6 +12,7 @@ const {
 } = process.env;
 
 const app = express();
+app.use(cors({ origin: 'http://localhost:4200', credentials: true })); // 👈 ajouté
 app.use(express.json());
 
 // youtube_live_chat_id → { videoId, users: Set<user_id>, intervals, lastActivity }
@@ -30,9 +33,9 @@ async function createYouTubeConnection(liveChatId, videoId) {
 
   console.log(`[YOUTUBE] Connexion au live ${videoId} / chatId: ${liveChatId}`);
 
+  const token = 'ya29.a0AW4XtxgYW5Vp6MHP_o1jz-aJvxrRnhv9MbsPc7kza9d9abPQYqzcEycUigPq6FpabDSNqgPwD5WJvz0_1L4HKn-hCPyqTsI0NNjqh-qzsNstp8Cnh5lMh5IkPf2g8HxNdj4FVAzd60c5iN4ZM_tzLPJmUw4pTQ6qUzf9MwNhaCgYKAXYSARESFQHGX2MiyhioIrDJ1mOLbTVcbxI6MQ0175';
   async function pollChat() {
     try {
-      const token = await getValidToken('youtube');
       const url = `https://www.googleapis.com/youtube/v3/liveChat/messages`
           + `?liveChatId=${liveChatId}&part=snippet,authorDetails`;
       const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -60,7 +63,6 @@ async function createYouTubeConnection(liveChatId, videoId) {
 
   async function pollViewers() {
     try {
-      const token = await getValidToken('youtube');
       const url = `https://www.googleapis.com/youtube/v3/videos`
           + `?part=liveStreamingDetails&id=${videoId}`;
       const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });

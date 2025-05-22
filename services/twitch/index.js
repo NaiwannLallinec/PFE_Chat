@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors'; // 👈
 import tmi from 'tmi.js';
 import amqp from 'amqplib';
 import fetch from 'node-fetch';
@@ -11,7 +12,14 @@ const {
 } = process.env;
 
 const app = express();
+
+// ✅ fix CORS
+app.use(cors({
+  origin: 'http://localhost:4200', // Angular app
+  credentials: true
+}));
 app.use(express.json());
+
 
 // twitch_channel → { client, users: Set<user_id>, viewerInterval, watchdog }
 const twitchConnections = new Map();
@@ -39,20 +47,23 @@ async function createTwitchConnection(twitch_channel, twitch_token) {
   let lastActivity = Date.now();
 
   client.on('message', (_chan, tags, message, self) => {
-    if (self) return;
-    lastActivity = Date.now();
-    const user = tags['display-name'] || tags.username;
+  if (self) return;
+  lastActivity = Date.now();
+  const user = tags['display-name'] || tags.username;
 
-    mqChannel.sendToQueue('chat-messages',
-        Buffer.from(JSON.stringify({
-          type:     'chat',
-          platform: 'TWITCH',
-          text:     `${user}: ${message}`,
-          user_ids: Array.from(users),
-        })),
-        { persistent: true }
-    );
-  });
+  console.log('[TWITCH][msg]', user, message); // 👈 AJOUTE ÇA
+
+  mqChannel.sendToQueue('chat-messages',
+    Buffer.from(JSON.stringify({
+      type:     'chat',
+      platform: 'TWITCH',
+      text:     `${user}: ${message}`,
+      user_ids: Array.from(users),
+    })),
+    { persistent: true }
+  );
+});
+
 
   const viewerInterval = setInterval(async () => {
     try {
