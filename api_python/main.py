@@ -122,6 +122,11 @@ class UserCreate(BaseModel):
     password: constr(min_length=6)
     streamer: bool
 
+class UserSocialUpdate(BaseModel):
+    twitch_channel: Optional[str] = None
+    youtube_live_chat_id: Optional[str] = None
+    youtube_video_id: Optional[str] = None
+    tiktok_username: Optional[str] = None
 
 
 class UserRead(BaseModel):
@@ -212,6 +217,23 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     db.delete(user)
     db.commit()
+
+@app.patch("/users/{user_id}/socials", response_model=UserRead)
+def update_user_socials(
+    user_id: int,
+    social_data: UserSocialUpdate,
+    db: Session = Depends(get_db)
+):
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    for field, value in social_data.dict(exclude_unset=True).items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 # -------------------------------------------------------------------------
