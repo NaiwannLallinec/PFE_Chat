@@ -174,3 +174,5 @@ button[type="submit"]:hover {
   animation: float 3s ease-in-out infinite;
 }
 
+.error   { color: #fb7185; }   /* rouge */
+.success { color: #4ade80; }   /* vert */
