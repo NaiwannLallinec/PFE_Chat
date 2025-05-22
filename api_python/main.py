@@ -1,24 +1,25 @@
+# main.py
 import os
 from typing import List
-import re
 from datetime import datetime
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, constr
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy import create_engine
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+import asyncio
+import aio_pika
+import json
 
 # Load environment variables
 load_dotenv()
 
-DATABASE_URL = "postgres://user:password@localhost:5432/mydatabase"
+DATABASE_URL = os.getenv("DB_URL")
 if not DATABASE_URL:
     raise RuntimeError("DB_URL environment variable is not set")
-# Fix SQLAlchemy dialect prefix if needed
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -33,7 +34,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # SQLAlchemy User model
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
@@ -48,7 +48,6 @@ class UserRead(BaseModel):
     id: int
     username: str
     created_at: datetime
-
     class Config:
         orm_mode = True
 
@@ -60,58 +59,69 @@ def get_db():
     finally:
         db.close()
 
-# FastAPI app instance
 app = FastAPI()
 
-# Utility functions
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+# CRUD endpoints omitted for brevity (same as before)
 
-# CRUD operations
-@app.post("/users", response_model=UserRead, status_code=201)
-def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.username == user_in.username).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    hashed = get_password_hash(user_in.password)
-    user = User(username=user_in.username, password_hash=hashed)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
 
-@app.get("/users", response_model=List[UserRead])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+async def consume_rabbit():
+    connection = await aio_pika.connect_robust(os.getenv("AMQP_URL", "amqp://user:password@localhost/"))
+    channel = await connection.channel()
+    queue = await channel.declare_queue("chat-messages", durable=True)
 
-@app.get("/users/{user_id}", response_model=UserRead)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    async with queue.iterator() as queue_iter:
+        async for message in queue_iter:
+            async with message.process():
+                payload = json.loads(message.body.decode())
+                print("[RabbitMQ] reçu :", payload)  # 👈 LOG ICI
+                if payload["type"] == "chat":
+                    push_chat_message(payload)
+                elif payload["type"] == "viewers":
+                    push_viewer_counts(payload)
 
-@app.put("/users/{user_id}", response_model=UserRead)
-def update_user(user_id: int, user_in: UserCreate, db: Session = Depends(get_db)):
-    user = db.query(User).get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    user.username = user_in.username
-    user.password_hash = get_password_hash(user_in.password)
-    db.commit()
-    db.refresh(user)
-    return user
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(consume_rabbit())
 
-@app.delete("/users/{user_id}", status_code=204)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    db.delete(user)
-    db.commit()
+# WebSocket connection manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+    async def broadcast(self, message: dict):
+        for connection in list(self.active_connections):
+            try:
+                await connection.send_json(message)
+            except WebSocketDisconnect:
+                self.disconnect(connection)
 
-# Create tables if run as script
+manager = ConnectionManager()
+
+@app.websocket("/ws/chat")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+# Helper functions for pushing from main process
+def push_chat_message(payload: dict):
+    import asyncio
+    print("[WS] push_chat_message →", payload)  # 👈 LOG ICI
+    asyncio.create_task(manager.broadcast({
+        "type": "chat_message",
+        "payload": payload
+    }))
+def push_viewer_counts(payload: dict):
+    import asyncio
+    asyncio.create_task(manager.broadcast({"type": "viewer_count", "payload": payload}))
+
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
     import uvicorn

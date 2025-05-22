@@ -2,14 +2,19 @@ import express from 'express';
 import amqp from 'amqplib';
 import { WebcastPushConnection } from 'tiktok-live-connector';
 import 'dotenv/config';
+import cors from 'cors';
+
 
 const {
   AMQP_URL = 'amqp://mq',
   PORT     = 3002,
 } = process.env;
 
+
 const app = express();
+app.use(cors({ origin: 'http://localhost:4200', credentials: true })); // 👈 CORS activé
 app.use(express.json());
+
 
 // tiktok_username → { conn, users: Set<user_id>, watchdog }
 const tiktokConnections = new Map();

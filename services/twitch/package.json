@@ -2,9 +2,11 @@
   "name": "twitch-producer",
   "type": "module",
   "dependencies": {
-    "tmi.js": "^1.8.5",
+    "amqplib": "^0.10.3",
+    "express": "^5.1.0",
     "node-fetch": "^3.3.2",
     "pg": "^8.11.3",
-    "amqplib": "^0.10.3"
+    "socket.io": "^4.8.1",
+    "tmi.js": "^1.8.5"
   }
 }
