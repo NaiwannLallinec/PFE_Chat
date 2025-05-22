@@ -16,46 +16,50 @@ export class SetupStreamerComponent {
   youtube_live_chat_id = '';
   youtube_video_id = '';
   tiktok_username = '';
-  user_id = '1';
+  user_id = sessionStorage.getItem('user_id') || '';
 
   constructor(
     private streamWatcher: StreamWatcherService,
-    private router: Router // 👈 Injection du Router
+    private router: Router
   ) {}
 
-  startTwitch() {
-    return this.streamWatcher.startWatchingTwitch(this.user_id, this.twitch_channel);
-  }
-
-  startTikTok() {
-    return this.streamWatcher.startWatchingTikTok(this.user_id, this.tiktok_username);
-  }
-
-  startYouTube() {
-    return this.streamWatcher.startWatchingYouTube(this.user_id, this.youtube_live_chat_id, this.youtube_video_id);
-  }
-
   submitForm() {
-    const observables = [];
-
+    // Lance tous les appels sans attendre
     if (this.twitch_channel) {
-      observables.push(this.startTwitch());
+      this.streamWatcher.startWatchingTwitch(this.user_id, this.twitch_channel).subscribe({
+        error: err => console.error('Erreur Twitch:', err)
+      });
     }
 
     if (this.tiktok_username) {
-      observables.push(this.startTikTok());
+      this.streamWatcher.startWatchingTikTok(this.user_id, this.tiktok_username).subscribe({
+        error: err => console.error('Erreur TikTok:', err)
+      });
     }
 
     if (this.youtube_live_chat_id && this.youtube_video_id) {
-      observables.push(this.startYouTube());
+      this.streamWatcher.startWatchingYouTube(
+        this.user_id,
+        this.youtube_live_chat_id,
+        this.youtube_video_id
+      ).subscribe({
+        error: err => console.error('Erreur YouTube:', err)
+      });
     }
 
-    if (observables.length > 0) {
-      Promise.all(observables.map(obs => obs.toPromise()))
-        .then(() => this.router.navigate(['/tchat']))
-        .catch(err => console.error('Erreur pendant la configuration :', err));
-    } else {
-      this.router.navigate(['/tchat']); 
-    }
+    // Mise à jour des réseaux sociaux
+    const socialsPayload: any = {};
+
+    if (this.twitch_channel) socialsPayload.twitch_channel = this.twitch_channel;
+    if (this.tiktok_username) socialsPayload.tiktok_username = this.tiktok_username;
+    if (this.youtube_live_chat_id) socialsPayload.youtube_live_chat_id = this.youtube_live_chat_id;
+    if (this.youtube_video_id) socialsPayload.youtube_video_id = this.youtube_video_id;
+
+    this.streamWatcher.updateUserSocials(this.user_id, socialsPayload).subscribe({
+      error: err => console.error('Erreur update socials:', err)
+    });
+
+    // Redirection immédiate
+    this.router.navigate(['/tchat']);
   }
 }

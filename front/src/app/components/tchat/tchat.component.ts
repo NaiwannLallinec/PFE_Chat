@@ -10,7 +10,7 @@ interface ViewerCounts { twitch: number; tiktok: number; youtube: number; total:
 export class TchatComponent implements OnInit, OnDestroy {
   constructor(private http: HttpClient) {}
 
-  userId = '1'; // à adapter avec ton auth réelle
+  userId = sessionStorage.getItem('user_id') || '';
   twitchToken = 'aw818fpymll1cqh1h7gekku961375n';
   streamName = '';
   tiktokName = '';

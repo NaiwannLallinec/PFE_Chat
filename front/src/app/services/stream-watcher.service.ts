@@ -9,6 +9,8 @@ export class StreamWatcherService {
   private twitchUrl = 'http://localhost:3001/twitch/start';
   private tiktokUrl = 'http://localhost:3002/tiktok/start';
   private youtubeUrl = 'http://localhost:3003/youtube/start';
+    private readonly baseUrl = "http://localhost:8000"
+
   private twitchToken = 'aw818fpymll1cqh1h7gekku961375n';
 
   constructor(private http: HttpClient) {}
@@ -37,5 +39,8 @@ export class StreamWatcherService {
       youtube_live_chat_id: youtubeChatId,
       youtube_video_id: youtubeVideoId
     });
+  }
+    updateUserSocials(userId: string, data: any) {
+    return this.http.patch(`${this.baseUrl}/users/${userId}/socials`, data);
   }
 }
