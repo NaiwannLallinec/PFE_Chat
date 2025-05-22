@@ -109,7 +109,8 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def create_access_token(data: dict) -> str:
     exp = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRES_MIN)
-    to_encode = data | {"exp": exp}
+    to_encode = data.copy()
+    to_encode["exp"] = exp
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGO)
 
 
