@@ -1,0 +1,15 @@
+<header class="main-header">
+  <div class="left">
+    <button (click)="goHome()">
+      <i class="fas fa-home"></i> Accueil
+    </button>
+  </div>
+  <div class="right">
+    <button *ngIf="isStreamer" (click)="goProfile()">
+      <i class="fas fa-user"></i> Profil
+    </button>
+    <button (click)="logout()">
+      <i class="fas fa-sign-out-alt"></i> Déconnexion
+    </button>
+  </div>
+</header>
