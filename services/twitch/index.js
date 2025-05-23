@@ -14,7 +14,7 @@ const app = express();
 
 // ✅ fix CORS
 app.use(cors({
-  origin: 'http://localhost:4200', // Angular app
+  origin: 'http://localhost:8080', // Angular app
   credentials: true
 }));
 app.use(express.json());

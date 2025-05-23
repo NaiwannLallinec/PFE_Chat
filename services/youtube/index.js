@@ -11,7 +11,7 @@ const {
 } = process.env;
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:4200', credentials: true })); // 👈 ajouté
+app.use(cors({ origin: 'http://localhost:8080', credentials: true })); // 👈 ajouté
 app.use(express.json());
 
 // youtube_live_chat_id → { videoId, users: Set<user_id>, intervals, lastActivity }

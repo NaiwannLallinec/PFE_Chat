@@ -49,7 +49,7 @@ from sqlalchemy.orm import (
 # -------------------------------------------------------------------------
 load_dotenv()
 
-DATABASE_URL = os.getenv("DB_URL") or "postgresql://user:password@localhost:5432/mydatabase"
+DATABASE_URL = os.getenv("DB_URL") or "postgresql://user:password@postgres:5432/mydatabase"
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 

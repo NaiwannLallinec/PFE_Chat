@@ -11,7 +11,7 @@ const {
 
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:4200', credentials: true })); // 👈 CORS activé
+app.use(cors({ origin: 'http://localhost:8080', credentials: true })); // 👈 CORS activé
 app.use(express.json());
 
 
