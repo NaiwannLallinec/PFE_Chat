@@ -3,11 +3,10 @@ import cors from 'cors'; // 👈
 import tmi from 'tmi.js';
 import amqp from 'amqplib';
 import fetch from 'node-fetch';
-import 'dotenv/config';
-import { TWITCH_CLIENT_ID } from '../../shared/config.js';
+
 
 const {
-  AMQP_URL = 'amqp://mq',
+  AMQP_URL = 'amqp://rabbitmq',
   PORT     = 3001,
 } = process.env;
 
@@ -51,8 +50,6 @@ async function createTwitchConnection(twitch_channel, twitch_token) {
   lastActivity = Date.now();
   const user = tags['display-name'] || tags.username;
 
-  console.log('[TWITCH][msg]', user, message); // 👈 AJOUTE ÇA
-
   mqChannel.sendToQueue('chat-messages',
     Buffer.from(JSON.stringify({
       type:     'chat',
@@ -71,7 +68,7 @@ async function createTwitchConnection(twitch_channel, twitch_token) {
           `https://api.twitch.tv/helix/streams?user_login=${twitch_channel}`,
           {
             headers: {
-              'Client-ID': TWITCH_CLIENT_ID,
+              'Client-ID': 'jmg950fysko6arbr8ewigm7cfi0v9k',
               'Authorization': `Bearer ${twitch_token}`,
             },
           }

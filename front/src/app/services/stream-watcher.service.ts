@@ -11,7 +11,7 @@ export class StreamWatcherService {
   private youtubeUrl = 'http://localhost:3003/youtube/start';
     private readonly baseUrl = "http://localhost:8000"
 
-  private twitchToken = 'aw818fpymll1cqh1h7gekku961375n';
+  private twitchToken = '4eechmp0u4zuv38rtqtok7gq6nxmya';
 
   constructor(private http: HttpClient) {}
 
