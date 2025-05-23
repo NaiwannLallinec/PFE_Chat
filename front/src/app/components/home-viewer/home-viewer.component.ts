@@ -29,7 +29,7 @@ constructor(
     this.streamers = data
       .filter(streamer =>
         !!streamer.twitch_channel ||
-        !!streamer.youtube_video_id ||
+        !!streamer.youtube_username ||
         !!streamer.tiktok_username
       )
       .sort((a, b) => a.username.localeCompare(b.username));
