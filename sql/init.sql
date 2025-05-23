@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   youtube_live_chat_id TEXT,
   youtube_video_id TEXT,
   tiktok_username TEXT,
+  youtube_username TEXT,
   is_viewer BOOLEAN,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
