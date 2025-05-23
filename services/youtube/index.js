@@ -36,26 +36,32 @@ async function createYouTubeConnection(liveChatId, videoId) {
   const token = 'ya29.a0AW4Xtxi81H9YnbjrrXiP_MIEYxOncThRTmYdavbfcMYjRb3-qujdOkT5peBbM1U5UoGGnRvsFQXG6WXeZr_D-JFzypKvmBohbUbfMYUkrl7rSzdGAeKuE6cZZqzkgEfrF1B7BJ2y9vIbbB745dpBjrXlUAgDNggvF5yLEC6WaCgYKAQMSARESFQHGX2Mieli2S4VHeVZ8lMVJL6ddVg0175';
   async function pollChat() {
     try {
-      const url = `https://www.googleapis.com/youtube/v3/liveChat/messages`
-          + `?liveChatId=${liveChatId}&part=snippet,authorDetails`;
-      const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const url = new URL('https://www.googleapis.com/youtube/v3/liveChat/messages');
+      url.searchParams.set('liveChatId', liveChatId);
+      url.searchParams.set('part', 'snippet,authorDetails');
+      if (pageToken) url.searchParams.set('pageToken', pageToken);
+
+      const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (data.error) throw new Error(JSON.stringify(data.error));
+
+      pageToken = data.nextPageToken; // <== ✅ mis à jour ici
 
       data.items?.forEach(it => {
         lastActivity = Date.now();
         const text = `${it.authorDetails.displayName}: ${it.snippet.displayMessage}`;
         mqChannel.sendToQueue(
-            'chat-messages',
-            Buffer.from(JSON.stringify({
-              type: 'chat',
-              platform: 'YOUTUBE',
-              text,
-              user_ids: Array.from(users)
-            })),
-            { persistent: true }
+          'chat-messages',
+          Buffer.from(JSON.stringify({
+            type: 'chat',
+            platform: 'YOUTUBE',
+            text,
+            user_ids: Array.from(users)
+          })),
+          { persistent: true }
         );
       });
+
     } catch (err) {
       console.error(`[YOUTUBE] Erreur pollChat (${videoId}):`, err.message);
     }
