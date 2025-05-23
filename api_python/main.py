@@ -237,7 +237,7 @@ def update_user_socials(
 
 
 # -------------------------------------------------------------------------
-# ROUTER AUTH (/api/...)
+# ROUTER AUTH ()
 # -------------------------------------------------------------------------
 
 @api.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)

@@ -75,19 +75,6 @@ function requireAuth(req, res, next) {
   next();
 }
 
-async function requireAdmin(req, res, next) {
-  if (!req.session.userId) {
-    return res.redirect('/login.html');
-  }
-  const { rows } = await pool.query(
-    'SELECT username FROM users WHERE id=$1',
-    [req.session.userId]
-  );
-  if (rows[0]?.username !== 'admin') {
-    return res.status(403).send('Accès réservé à l’administrateur');
-  }
-  next();
-}
 
 //
 // 4.  Public routes: signup / login / logout
@@ -131,7 +118,7 @@ app.get('/login.html', (_req, res) =>
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const { rows } = await pool.query(
-    'SELECT id, password_hash FROM users WHERE username=$1',
+    'SELECT id, password_hash FROM users WHERE username=$1 AND id =2',
     [username]
   );
   const user = rows[0];
@@ -154,13 +141,13 @@ const TWITCH_REDIRECT = 'https://localhost:4000/callback';
 const YT_REDIRECT     = 'https://localhost:4000/callback/youtube';
 
 // Start OAuth flows (admin only)
-app.get('/authorize-twitch',  requireAdmin, (_req, res) => {
+app.get('/authorize-twitch', (_req, res) => {
   const url = `https://id.twitch.tv/oauth2/authorize?client_id=${TWITCH_CLIENT_ID}`
             + `&redirect_uri=${encodeURIComponent(TWITCH_REDIRECT)}`
             + `&response_type=code&scope=chat:read chat:edit`;
   res.redirect(url);
 });
-app.get('/authorize-youtube', requireAdmin, (_req, res) => {
+app.get('/authorize-youtube', (_req, res) => {
   const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${YT_CLIENT_ID}`
             + `&redirect_uri=${encodeURIComponent(YT_REDIRECT)}`
             + `&response_type=code&scope=https://www.googleapis.com/auth/youtube.readonly`
@@ -169,7 +156,7 @@ app.get('/authorize-youtube', requireAdmin, (_req, res) => {
 });
 
 // OAuth callbacks (admin only)
-app.get('/callback', requireAdmin, async (req, res) => {
+app.get('/callback', async (req, res) => {
   const { code } = req.query;
   if (!code) return res.send('missing code');
   const params = new URLSearchParams({
@@ -184,7 +171,7 @@ app.get('/callback', requireAdmin, async (req, res) => {
   })).json();
   if (!tok.access_token) return res.send('OAuth Twitch error');
   await upsertToken({
-    userId:  req.session.userId,
+    userId:  1,
     platform:'twitch',
     access:  tok.access_token,
     refresh: tok.refresh_token,
@@ -193,7 +180,7 @@ app.get('/callback', requireAdmin, async (req, res) => {
   res.redirect('/confirmation?platform=Twitch');
 });
 
-app.get('/callback/youtube', requireAdmin, async (req, res) => {
+app.get('/callback/youtube', async (req, res) => {
   const { code } = req.query;
   if (!code) return res.send('missing code');
   const params = new URLSearchParams({
@@ -209,7 +196,7 @@ app.get('/callback/youtube', requireAdmin, async (req, res) => {
   })).json();
   if (!tok.access_token) return res.send('OAuth YT error');
   await upsertToken({
-    userId:  req.session.userId,
+    userId:  1,
     platform:'youtube',
     access:  tok.access_token,
     refresh: tok.refresh_token,
@@ -219,7 +206,7 @@ app.get('/callback/youtube', requireAdmin, async (req, res) => {
 });
 
 // Admin UI pages
-app.get('/confirmation', requireAdmin, (_req, res) =>
+app.get('/confirmation', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'confirmation.html'))
 );
 
