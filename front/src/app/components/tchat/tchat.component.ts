@@ -1,13 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { io, Socket } from 'socket.io-client';
 export type Platform = 'TWITCH' | 'TIKTOK' | 'YOUTUBE';
 interface ChatMessage { platform: Platform; text: string; }
 interface ViewerCounts { twitch: number; tiktok: number; youtube: number; total: number; }
-@Component({ selector: 'app-tchat', templateUrl: './tchat.component.html', styleUrls: ['./tchat.component.css'], standalone: true, imports: [CommonModule, FormsModule] })
-export class TchatComponent implements OnInit, OnDestroy {
+@Component(
+  { 
+    selector: 'app-tchat', 
+    templateUrl: './tchat.component.html', 
+    styleUrls: ['./tchat.component.css'], 
+    standalone: true, 
+    imports: [CommonModule, FormsModule] 
+  }
+)
+
+export class TchatComponent implements OnInit, OnDestroy, AfterViewChecked {
+  
+  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+
   constructor(private http: HttpClient) {}
 
   userId = sessionStorage.getItem('user_id') || '';
@@ -35,7 +47,16 @@ export class TchatComponent implements OnInit, OnDestroy {
     });
 
     this.socket.on('viewer_count', (payload: ViewerCounts) => {
-      this.viewerCounts = payload;
+      const twitch = +payload.twitch || 0;
+      const tiktok = +payload.tiktok || 0;
+      const youtube = +payload.youtube || 0;
+
+      this.viewerCounts = {
+        twitch,
+        tiktok,
+        youtube,
+        total: twitch + tiktok + youtube
+      };
     });
   }
 
@@ -43,39 +64,20 @@ export class TchatComponent implements OnInit, OnDestroy {
     this.socket.disconnect();
   }
 
-  startTwitch() {
-    this.http.post('http://localhost:3001/twitch/start', {
-      user_id: this.userId,
-      twitch_channel: this.streamName,
-      twitch_token: this.twitchToken
-    }).subscribe({
-      next: () => console.log('Twitch OK'),
-      error: err => console.error('Erreur Twitch', err)
-    });
+  ngAfterViewChecked(): void {
+    this.scrollToBottom();
   }
 
-  startTikTok() {
-    this.http.post('http://localhost:3002/tiktok/start', {
-      user_id: this.userId,
-      tiktok_username: this.tiktokName
-    }).subscribe({
-      next: () => console.log('TikTok OK'),
-      error: err => console.error('Erreur TikTok', err)
-    });
-  }
-
-  startYouTube() {
-    this.http.post('http://localhost:3003/youtube/start', {
-      user_id: this.userId,
-      youtube_live_chat_id: this.ytChatId,
-      youtube_video_id: this.ytVideoId
-    }).subscribe({
-      next: () => console.log('YouTube OK'),
-      error: err => console.error('Erreur YouTube', err)
-    });
-  }
-
+  
   togglePlatform(p: Platform): void {
     this.platformFilters[p] = !this.platformFilters[p];
+  }
+
+  private scrollToBottom(): void {
+    try {
+      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+    } catch (err) {
+      console.error('Auto-scroll error:', err);
+    }
   }
 }
