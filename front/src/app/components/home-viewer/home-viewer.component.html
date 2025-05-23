@@ -25,7 +25,7 @@
         </div>
         <div *ngIf="streamer.youtube_video_id">
           <i class="fab fa-youtube youtube-icon"></i>
-          <a [href]="'https://youtube.com/watch?v=' + streamer.youtube_video_id" target="_blank">{{ streamer.youtube_video_id }}</a>
+          <a [href]="'https://youtube.com/watch?v=' + streamer.youtube_username" target="_blank">{{ streamer.youtube_username }}</a>
         </div>
         <div *ngIf="streamer.tiktok_username">
           <i class="fab fa-tiktok tiktok-icon"></i>

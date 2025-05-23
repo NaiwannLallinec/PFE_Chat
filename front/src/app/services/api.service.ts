@@ -9,6 +9,7 @@ export interface User {
   youtube_live_chat_id?: string;
   youtube_video_id?: string;
   tiktok_username?: string;
+  youtube_username?: string;
   is_viewer ?: boolean;
 }
 
