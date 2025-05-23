@@ -16,6 +16,7 @@ export class SetupStreamerComponent {
   youtube_live_chat_id = '';
   youtube_video_id = '';
   tiktok_username = '';
+  youtube_username = '';
   user_id = sessionStorage.getItem('user_id') || '';
 
   constructor(
@@ -54,6 +55,8 @@ export class SetupStreamerComponent {
     if (this.tiktok_username) socialsPayload.tiktok_username = this.tiktok_username;
     if (this.youtube_live_chat_id) socialsPayload.youtube_live_chat_id = this.youtube_live_chat_id;
     if (this.youtube_video_id) socialsPayload.youtube_video_id = this.youtube_video_id;
+    if (this.youtube_username) socialsPayload.youtube_username = this.youtube_username;
+
 
     this.streamWatcher.updateUserSocials(this.user_id, socialsPayload).subscribe({
       error: err => console.error('Erreur update socials:', err)

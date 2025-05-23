@@ -87,6 +87,7 @@ class User(Base):
     youtube_live_chat_id = Column(String)
     youtube_video_id = Column(String)
     tiktok_username = Column(String)
+    youtube_username = Column(String)
     is_viewer    = Column(Boolean, nullable=False, server_default=text("TRUE"))  # <-- NEW
     created_at = Column(
         TIMESTAMP(timezone=True), server_default=text("NOW()"), nullable=False
@@ -127,6 +128,7 @@ class UserSocialUpdate(BaseModel):
     youtube_live_chat_id: Optional[str] = None
     youtube_video_id: Optional[str] = None
     tiktok_username: Optional[str] = None
+    youtube_username: Optional[str] = None
 
 
 class UserRead(BaseModel):
