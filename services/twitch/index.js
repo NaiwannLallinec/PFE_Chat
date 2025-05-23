@@ -62,42 +62,50 @@ async function createTwitchConnection(twitch_channel, twitch_token) {
 });
 
 
-  const viewerInterval = setInterval(async () => {
-    try {
-      const res = await fetch(
-          `https://api.twitch.tv/helix/streams?user_login=${twitch_channel}`,
-          {
-            headers: {
-              'Client-ID': 'jmg950fysko6arbr8ewigm7cfi0v9k',
-              'Authorization': `Bearer ${twitch_token}`,
-            },
-          }
-      );
-      const d = await res.json();
-      if (!d.data || d.data.length === 0) {
-        throw Object.assign(new Error('No active stream'), { code: 'NO_STREAM' });
+ // 👇 Fonction réutilisable pour éviter la duplication
+async function fetchViewers() {
+  try {
+    const res = await fetch(
+      `https://api.twitch.tv/helix/streams?user_login=${twitch_channel}`,
+      {
+        headers: {
+          'Client-ID': 'jmg950fysko6arbr8ewigm7cfi0v9k',
+          'Authorization': `Bearer ${twitch_token}`,
+        },
       }
-
-      const count = d.data[0].viewer_count;
-      lastActivity = Date.now();
-
-      mqChannel.sendToQueue('chat-messages',
-          Buffer.from(JSON.stringify({
-            type:     'viewers',
-            platform: 'TWITCH',
-            count,
-            user_ids: Array.from(users),
-          })),
-          { persistent: true }
-      );
-    } catch (e) {
-      if (e.code === 'NO_STREAM') {
-        console.warn(`[TWITCH] ${twitch_channel} est hors ligne`);
-      } else {
-        console.error(`[TWITCH] erreur viewers sur #${twitch_channel} :`, e);
-      }
+    );
+    const d = await res.json();
+    if (!d.data || d.data.length === 0) {
+      throw Object.assign(new Error('No active stream'), { code: 'NO_STREAM' });
     }
-  }, 30_000);
+
+    const count = d.data[0].viewer_count;
+    lastActivity = Date.now();
+
+    mqChannel.sendToQueue('chat-messages',
+      Buffer.from(JSON.stringify({
+        type: 'viewers',
+        platform: 'TWITCH',
+        count,
+        user_ids: Array.from(users),
+      })),
+      { persistent: true }
+    );
+  } catch (e) {
+    if (e.code === 'NO_STREAM') {
+      console.warn(`[TWITCH] ${twitch_channel} est hors ligne`);
+    } else {
+      console.error(`[TWITCH] erreur viewers sur #${twitch_channel} :`, e);
+    }
+  }
+}
+
+// 👇 Appel immédiat
+await fetchViewers();
+
+// 👇 Puis toutes les 30 secondes
+const viewerInterval = setInterval(fetchViewers, 30_000);
+
 
   const watchdog = setInterval(() => {
     if (Date.now() - lastActivity > 60_000) {

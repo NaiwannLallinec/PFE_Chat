@@ -33,7 +33,7 @@ async function createYouTubeConnection(liveChatId, videoId) {
 
   console.log(`[YOUTUBE] Connexion au live ${videoId} / chatId: ${liveChatId}`);
 
-  const token = 'ya29.a0AW4Xtxg0FcbyWhsU9tktDiEDLd1Mv6lEAzo2WzndnFNorFGxP-3yQmQpbptD7AgxQvDgqBJx1GwvZb1BXI_patWLtPatZB8ej8f_sySdtpCNVIzFJdMWONekDMFEnLufmyLJhLTWRSwsJAx0FaAeXIyqsb2Np46WaIjnFn_WaCgYKARASARESFQHGX2MiZBi98pi080eidP6vEXHkNA0175';
+  const token = 'ya29.a0AW4XtxhttQwOqntxfenz72Fzm3aMam1p-2yhnS3a4Y2e1rVftGGP3lwWE9eCmkCGEpw1zVNysPtZnCZGoLfllVnlct4wazhnoTWpPr2K29WAPu3e7_9VI17he5mdbj5lOv-2ZUq6teymrF25yd--keKmKLrP66U41DshOGVNaCgYKAWESARESFQHGX2Mi2HuYeIUnqoqsCLS6tJT3AA0175';
   async function pollChat() {
     try {
       const url = new URL('https://www.googleapis.com/youtube/v3/liveChat/messages');
