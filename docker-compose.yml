@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   postgres:
     image: postgres:15
@@ -23,6 +24,57 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+  tiktok:
+    build: ./services/tiktok
+    container_name: tiktok
+    depends_on:
+      - rabbitmq
+    ports:
+     - "3002:3002"
+    volumes:
+     - ./shared:/shared
+    command: sh -c "sleep 10 && npm start"
+    environment:
+    - AMQP_URL=amqp://user:password@rabbitmq
+
+  twitch:
+    build: ./services/twitch
+    container_name: twitch
+    depends_on:
+      - rabbitmq
+    ports:
+     - "3001:3001"
+    volumes:
+     - ./shared:/shared
+    command: sh -c "sleep 10 && npm start"
+    environment:
+    - AMQP_URL=amqp://user:password@rabbitmq
+
+  youtube:
+    build: ./services/youtube
+    container_name: youtube
+    depends_on:
+      - rabbitmq
+    ports:
+     - "3003:3003"
+    volumes:
+    - ./shared:/shared
+    command: sh -c "sleep 10 && npm start"
+    environment:
+    - AMQP_URL=amqp://user:password@rabbitmq
+
+
+  consumer:
+    build: ./consumer
+    container_name: consumer
+    depends_on:
+      - rabbitmq
+    ports:
+     - "5000:5000"
+    volumes:
+     - ./certs:/certs
+      
+    command: sh -c "sleep 10 && npm start"
 
 volumes:
   postgres_data:

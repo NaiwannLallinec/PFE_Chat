@@ -13,7 +13,7 @@ import { Server as IOServer } from 'socket.io';
 import { fileURLToPath } from 'url';
 
 const {
-    AMQP_URL = 'amqp://user:password@localhost',
+    AMQP_URL = 'amqp://user:password@rabbitmq',
     PORT     = 5000
 } = process.env;
 

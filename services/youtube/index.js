@@ -2,12 +2,11 @@ import express from 'express';
 import amqp from 'amqplib';
 import fetch from 'node-fetch';
 import 'dotenv/config';
-import { getValidToken } from '../../shared/tokenManager.js';
 import cors from 'cors';
 
 
 const {
-  AMQP_URL = 'amqp://localhost',
+  AMQP_URL = 'amqp://rabbitmq',
   PORT     = 3003,
 } = process.env;
 
@@ -34,7 +33,7 @@ async function createYouTubeConnection(liveChatId, videoId) {
 
   console.log(`[YOUTUBE] Connexion au live ${videoId} / chatId: ${liveChatId}`);
 
-  const token = 'ya29.a0AW4XtxiH03rt09pUVuy348OWBBMqCJyESXNwcY5x4U8ubxvUaKzDlTCtT8r6SscVgK5kO_M-W4IND9hvAzc6dHcnL4ePGOnjwAQPl18pfNzROARzM9UbDTW3-fVe21C-CtP6bKN44xD7jT7mpAKp-XX8GLPV2KWNyKK66JgLaCgYKAQMSARESFQHGX2MijNm0ksAmw2wovFYyRs6mZg0175';
+  const token = 'ya29.a0AW4Xtxi81H9YnbjrrXiP_MIEYxOncThRTmYdavbfcMYjRb3-qujdOkT5peBbM1U5UoGGnRvsFQXG6WXeZr_D-JFzypKvmBohbUbfMYUkrl7rSzdGAeKuE6cZZqzkgEfrF1B7BJ2y9vIbbB745dpBjrXlUAgDNggvF5yLEC6WaCgYKAQMSARESFQHGX2Mieli2S4VHeVZ8lMVJL6ddVg0175';
   async function pollChat() {
     try {
       const url = `https://www.googleapis.com/youtube/v3/liveChat/messages`

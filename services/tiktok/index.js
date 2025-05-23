@@ -1,12 +1,11 @@
 import express from 'express';
 import amqp from 'amqplib';
 import { WebcastPushConnection } from 'tiktok-live-connector';
-import 'dotenv/config';
 import cors from 'cors';
 
 
 const {
-  AMQP_URL = 'amqp://mq',
+  AMQP_URL = 'amqp://rabbitmq',
   PORT     = 3002,
 } = process.env;
 

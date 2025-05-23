@@ -6,6 +6,12 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "node-fetch": "^3.3.2",
-    "pg": "^8.11.3"
-  }
+    "pg": "^8.11.3",
+    "dotenv": "^16.4.5"
+
+  },
+  "scripts": {
+  "start": "node index.js"
+}
+
 }
