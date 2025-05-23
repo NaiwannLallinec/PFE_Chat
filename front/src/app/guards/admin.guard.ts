@@ -1,44 +1,47 @@
-// admin.guard.ts
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-import { jwtDecode } from 'jwt-decode';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AdminGuard implements CanActivate {
-  constructor(private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  canActivate(): boolean {
-    const token = localStorage.getItem('token');
-    if (!token) {
+  canActivate(): Observable<boolean> {
+    const userId = sessionStorage.getItem('user_id');
+    if (!userId) {
       this.router.navigate(['/login']);
-      return false;
+      return of(false);
     }
 
-    try {
-      const decoded: any = jwtDecode(token);
-      if (decoded.is_viewer === false) {
-        return true;
-      }
-    } catch (err) {
-      console.error('Token decoding failed', err);
-    }
-
-    this.router.navigate(['/home-viewer']);
-    return false;
+    return this.http.get<any>(`http://localhost:8000/users/${userId}`).pipe(
+      map(user => {
+        if (user && user.is_viewer === false) {
+          return true;
+        } else {
+          this.router.navigate(['/home-viewer']);
+          return false;
+        }
+      }),
+      catchError(err => {
+        console.error('Erreur accès admin:', err);
+        this.router.navigate(['/login']);
+        return of(false);
+      })
+    );
   }
 
-  isStreamer(): boolean {
-  const token = localStorage.getItem('token');
-  if (!token) return false;
+  /** Méthode utilitaire si besoin en composant pour afficher / cacher un bouton */
+  isStreamer(): Observable<boolean> {
+    const userId = sessionStorage.getItem('user_id');
+    if (!userId) return of(false);
 
-  try {
-    const decoded: any = jwtDecode(token);
-    return decoded.is_viewer === false;
-  } catch (err) {
-    console.error('Token decoding failed', err);
-    return false;
+    return this.http.get<any>(`http://localhost:8000/users/${userId}`).pipe(
+      map(user => user && user.is_viewer === false),
+      catchError(() => of(false))
+    );
   }
-}
 }

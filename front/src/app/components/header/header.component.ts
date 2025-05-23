@@ -14,8 +14,10 @@ export class HeaderComponent {
   
   constructor(private router: Router, private adminGuard: AdminGuard) {}
 
-  get isStreamer(): boolean {
-    return this.adminGuard.isStreamer();
+  isStreamer = false;
+
+  ngOnInit(): void {
+  this.adminGuard.isStreamer().subscribe(value => this.isStreamer = value);
   }
 
   goHome() {

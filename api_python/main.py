@@ -3,23 +3,19 @@ import os
 
 from typing import List
 from typing import Optional
-import re
 from datetime import datetime
 from datetime import datetime, timedelta
 from typing import List, Generator
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel, constr
 
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text, create_engine, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, TIMESTAMP, text, create_engine, Boolean
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 
-import asyncio
-import aio_pika
-import json
 from dotenv import load_dotenv
 from fastapi import (
     FastAPI,
@@ -156,7 +152,7 @@ app = FastAPI()
 # CORS (autorise Angular en dev)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
