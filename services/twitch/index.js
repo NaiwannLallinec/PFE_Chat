@@ -32,7 +32,7 @@ const mqChannel = await amqpConn.createChannel();
 await mqChannel.assertQueue('chat-messages', { durable: true });
 
 // 🚀 Démarrer une connexion Twitch (si elle n’existe pas déjà)
-async function createTwitchConnection(twitch_channel, twitch_token) {
+async function createTwitchConnection(twitch_channel, twitch_token, initialUsers = []) {
   const client = new tmi.Client({
     connection: { reconnect: true, secure: true },
     identity:   { username: 'devpfe', password: `oauth:${twitch_token}` },
@@ -42,7 +42,7 @@ async function createTwitchConnection(twitch_channel, twitch_token) {
   await client.connect();
   console.log(`[TWITCH] connecté à #${twitch_channel}`);
 
-  const users = new Set();
+const users = new Set(initialUsers);
   let lastActivity = Date.now();
 
   client.on('message', (_chan, tags, message, self) => {
@@ -158,7 +158,7 @@ app.post('/twitch/start', async (req, res) => {
     console.log(`[TWITCH] ajout user ${user_id} à #${twitch_channel}`);
   } else {
     try {
-      users = await createTwitchConnection(twitch_channel, twitch_token);
+      users = await createTwitchConnection(twitch_channel, twitch_token, [user_id]);
     } catch (e) {
       console.error(`[TWITCH] erreur lors de la connexion à #${twitch_channel} :`, e);
       return res.status(500).json({ error: 'Impossible de se connecter au streamer' });

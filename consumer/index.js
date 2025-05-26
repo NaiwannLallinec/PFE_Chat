@@ -42,10 +42,6 @@ const io = new IOServer(httpsSrv, {
 /* ─── 2. Mémoire viewers live ─────────────────────────────────────────── */
 const currentViewers = { twitch: 0, youtube: 0, tiktok: 0 };
 
-function broadcastViewers() {
-    const total = currentViewers.twitch + currentViewers.youtube + currentViewers.tiktok;
-    io.emit('viewer_count', { ...currentViewers, total });
-}
 
 /* ─── 3. Stockage des sockets par userId ──────────────────────────────── */
 const userSockets = new Map(); // userId -> Set of socket instances
@@ -94,11 +90,11 @@ io.on('connection', socket => {
                 });
             } else {
                 // Broadcast si pas de users spécifiés
-                io.emit('chat_message', payload);
-            }
+    ch.ack(msg);            }
         }
 
         else if (payload.type === 'viewers') {
+            console.log(payload)
                 const key = payload.platform.toLowerCase();
                 currentViewers[key] = payload.count;
 
@@ -117,8 +113,7 @@ io.on('connection', socket => {
                         }
                     });
                 } else {
-                    // fallback broadcast global si user_ids vide ou non spécifié
-                    broadcastViewers();
+                        ch.ack(msg);
                 }
             }
 
