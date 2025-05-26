@@ -39,9 +39,6 @@ const io = new IOServer(httpsSrv, {
     }
 });
 
-/* ─── 2. Mémoire viewers live ─────────────────────────────────────────── */
-const currentViewers = { twitch: 0, youtube: 0, tiktok: 0 };
-
 
 /* ─── 3. Stockage des sockets par userId ──────────────────────────────── */
 const userSockets = new Map(); // userId -> Set of socket instances
@@ -88,34 +85,24 @@ io.on('connection', socket => {
                         }
                     }
                 });
-            } else {
-                // Broadcast si pas de users spécifiés
-    ch.ack(msg);            }
+                   }
         }
 
-        else if (payload.type === 'viewers') {
-            console.log(payload)
-                const key = payload.platform.toLowerCase();
-                currentViewers[key] = payload.count;
-
-                const users = Array.isArray(payload.user_ids) ? payload.user_ids : [];
-
-                if (users.length > 0) {
-                    const total = currentViewers.twitch + currentViewers.youtube + currentViewers.tiktok;
-                    const viewerPayload = { ...currentViewers, total };
-
-                    users.forEach(userId => {
-                        const sockets = userSockets.get(userId);
-                        if (sockets) {
-                            for (const sock of sockets) {
-                                sock.emit('viewer_count', viewerPayload);
-                            }
-                        }
-                    });
-                } else {
-                        ch.ack(msg);
+else if (payload.type === 'viewers') {
+    const users = Array.isArray(payload.user_ids) ? payload.user_ids : [];
+    if (users.length > 0) {
+        users.forEach(userId => {
+            const sockets = userSockets.get(userId);
+            if (sockets) {
+                for (const sock of sockets) {
+                    sock.emit('viewer_count', payload); // renvoie tel quel
+                    console.log('[emit viewer_count]', userId, payload); // ← ajoute ça
                 }
             }
+        });
+    }
+}
+
 
 
         ch.ack(msg);

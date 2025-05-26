@@ -8,6 +8,7 @@ export interface User {
   twitch_channel?: string;
   youtube_live_chat_id?: string;
   youtube_video_id?: string;
+  youtube_username?: string;
   tiktok_username?: string;
   is_viewer ?: boolean;
 }

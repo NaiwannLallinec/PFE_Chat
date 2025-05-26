@@ -46,18 +46,30 @@ export class TchatComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (this.platformFilters[msg.platform]) this.messages.push(msg);
     });
 
-    this.socket.on('viewer_count', (payload: ViewerCounts) => {
-      const twitch = +payload.twitch || 0;
-      const tiktok = +payload.tiktok || 0;
-      const youtube = +payload.youtube || 0;
+this.socket.on('viewer_count', (payload: any) => {
+  console.log('Received viewer count:', payload);
+  const platform = payload.platform;
+  const count = +payload.count || 0;
 
-      this.viewerCounts = {
-        twitch,
-        tiktok,
-        youtube,
-        total: twitch + tiktok + youtube
-      };
-    });
+  switch (platform) {
+    case 'TWITCH':
+      this.viewerCounts.twitch = count;
+      break;
+    case 'TIKTOK':
+      this.viewerCounts.tiktok = count;
+      break;
+    case 'YOUTUBE':
+      this.viewerCounts.youtube = count;
+      break;
+  }
+
+  // Toujours recalculer le total
+  this.viewerCounts.total = 
+    this.viewerCounts.twitch +
+    this.viewerCounts.tiktok +
+    this.viewerCounts.youtube;
+});
+
   }
 
   ngOnDestroy(): void {

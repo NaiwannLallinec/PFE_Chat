@@ -26,8 +26,8 @@ await mqChannel.assertQueue('chat-messages', { durable: true });
 
 // === Gestion connexion YouTube Live ================================
 
-async function createYouTubeConnection(liveChatId, videoId,token) {
-  const users = new Set();
+async function createYouTubeConnection(liveChatId, videoId,token,user_id) {
+  const users = new Set([user_id]);
   let lastActivity = Date.now();
   let pageToken = null;
 
@@ -150,7 +150,7 @@ app.post('/youtube/start', async (req, res) => {
     console.log(`[YOUTUBE] Ajout user ${user_id} à ${youtube_live_chat_id}`);
   } else {
     try {
-      users = await createYouTubeConnection(youtube_live_chat_id, youtube_video_id,token);
+      users = await createYouTubeConnection(youtube_live_chat_id, youtube_video_id,token,user_id);
     } catch (e) {
       console.error('[YOUTUBE] Erreur de connexion :', e.message);
       return res.status(500).json({ error: 'Connexion YouTube échouée' });

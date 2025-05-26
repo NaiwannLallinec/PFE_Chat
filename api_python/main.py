@@ -159,6 +159,7 @@ class UserRead(BaseModel):
     twitch_channel: Optional[str] = None
     youtube_live_chat_id: Optional[str] = None
     youtube_video_id: Optional[str] = None
+    youtube_username: Optional[str] = None
     tiktok_username: Optional[str] = None
     is_viewer: bool
     created_at: datetime
