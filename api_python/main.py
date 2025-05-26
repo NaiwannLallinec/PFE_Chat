@@ -1,6 +1,6 @@
 # main.py
 import os
-
+import httpx
 from typing import List
 from typing import Optional
 from datetime import datetime
@@ -114,6 +114,31 @@ def create_access_token(data: dict) -> str:
 # -------------------------------------------------------------------------
 # Pydantic – Schémas
 # -------------------------------------------------------------------------
+# URLs des workers
+TWITCH_URL = "http://twitch:3001/twitch/start"
+TIKTOK_URL = "http://tiktok:3002/tiktok/start"
+YOUTUBE_URL = "http://youtube:3003/youtube/start"
+
+
+
+
+# 📦 Modèles de données
+class TwitchStartRequest(BaseModel):
+    user_id: str
+    twitch_channel: str
+
+
+class TikTokStartRequest(BaseModel):
+    user_id: str
+    tiktok_username: str
+
+
+class YouTubeStartRequest(BaseModel):
+    user_id: str
+    youtube_live_chat_id: str
+    youtube_video_id: str
+    
+
 class UserCreate(BaseModel):
     username: constr(min_length=3, max_length=50)
     password: constr(min_length=6)
@@ -271,6 +296,81 @@ def login(
         "user_id": user.id,
         "is_viewer": user.is_viewer,
     }
+
+# -------------------------------------------------------------------------
+# ROUTES POUR LES WORKERS
+# -------------------------------------------------------------------------
+
+@app.post("/twitch/start")
+async def start_twitch_stream(data: TwitchStartRequest):
+    if not data.twitch_channel:
+        raise HTTPException(status_code=400, detail="Nom du stream Twitch requis")
+
+    twitch_token = os.getenv("TWITCH_TOKEN")
+    if not twitch_token:
+        raise HTTPException(status_code=500, detail="Token Twitch non défini")
+    
+    print(twitch_token)
+
+    payload = {
+        "user_id": data.user_id,
+        "twitch_channel": data.twitch_channel,
+        "twitch_token": twitch_token  
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(TWITCH_URL, json=payload)
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=502, detail=f"Erreur de connexion à Twitch worker: {e}")
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=response.status_code, detail=f"Twitch worker a retourné une erreur: {e.response.text}")
+
+
+@app.post("/tiktok/start")
+async def start_tiktok_stream(data: TikTokStartRequest):
+    if not data.tiktok_username:
+        raise HTTPException(status_code=400, detail="Nom d’utilisateur TikTok requis")
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(TIKTOK_URL, json=data.dict())
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=502, detail=f"Erreur de connexion à TikTok worker: {e}")
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=response.status_code, detail=f"TikTok worker a retourné une erreur: {e.response.text}")
+
+
+
+@app.post("/youtube/start")
+async def start_youtube_stream(data: YouTubeStartRequest):
+    if not data.youtube_live_chat_id or not data.youtube_video_id:
+        raise HTTPException(status_code=400, detail="Identifiants YouTube requis")
+
+    token = os.getenv("YOUTUBE_ACCESS_TOKEN")
+    if not token:
+        raise HTTPException(status_code=500, detail="Token d'accès YouTube non défini")
+    
+    print(token)
+
+    payload = data.dict()
+    payload["token"] = token  
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(YOUTUBE_URL, json=payload)
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=502, detail=f"Erreur de connexion à YouTube worker: {e}")
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=response.status_code, detail=f"YouTube worker a retourné une erreur: {e.response.text}")
+
+
 
 
 app.include_router(api)

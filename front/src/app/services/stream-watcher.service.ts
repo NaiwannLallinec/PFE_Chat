@@ -6,27 +6,23 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class StreamWatcherService {
-  private twitchUrl = 'http://localhost:3001/twitch/start';
-  private tiktokUrl = 'http://localhost:3002/tiktok/start';
-  private youtubeUrl = 'http://localhost:3003/youtube/start';
-    private readonly baseUrl = "http://localhost:8000"
+  
+  private readonly baseUrl = "http://localhost:8000"
 
-  private twitchToken = 'x2fm1uopzkki4img6sl4kka5z5hftd';
 
   constructor(private http: HttpClient) {}
 
   startWatchingTwitch(userId: string, streamName: string): Observable<any> {
     if (!streamName) throw new Error('Nom du stream Twitch requis');
-    return this.http.post(this.twitchUrl, {
+    return this.http.post(`${this.baseUrl}/twitch/start`, {
       user_id: userId,
-      twitch_channel: streamName,
-      twitch_token: this.twitchToken
+      twitch_channel: streamName
     });
   }
 
   startWatchingTikTok(userId: string, tiktokUsername: string): Observable<any> {
     if (!tiktokUsername) throw new Error('Nom d’utilisateur TikTok requis');
-    return this.http.post(this.tiktokUrl, {
+    return this.http.post(`${this.baseUrl}/tiktok/start`, {
       user_id: userId,
       tiktok_username: tiktokUsername
     });
@@ -34,7 +30,7 @@ export class StreamWatcherService {
 
   startWatchingYouTube(userId: string, youtubeChatId: string, youtubeVideoId: string): Observable<any> {
     if (!youtubeChatId || !youtubeVideoId) throw new Error('Identifiants YouTube requis');
-    return this.http.post(this.youtubeUrl, {
+    return this.http.post(`${this.baseUrl}/youtube/start`, {
       user_id: userId,
       youtube_live_chat_id: youtubeChatId,
       youtube_video_id: youtubeVideoId

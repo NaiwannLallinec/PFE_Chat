@@ -26,14 +26,13 @@ await mqChannel.assertQueue('chat-messages', { durable: true });
 
 // === Gestion connexion YouTube Live ================================
 
-async function createYouTubeConnection(liveChatId, videoId) {
+async function createYouTubeConnection(liveChatId, videoId,token) {
   const users = new Set();
   let lastActivity = Date.now();
   let pageToken = null;
 
   console.log(`[YOUTUBE] Connexion au live ${videoId} / chatId: ${liveChatId}`);
 
-  const token = 'ya29.a0AW4XtxhttQwOqntxfenz72Fzm3aMam1p-2yhnS3a4Y2e1rVftGGP3lwWE9eCmkCGEpw1zVNysPtZnCZGoLfllVnlct4wazhnoTWpPr2K29WAPu3e7_9VI17he5mdbj5lOv-2ZUq6teymrF25yd--keKmKLrP66U41DshOGVNaCgYKAWESARESFQHGX2Mi2HuYeIUnqoqsCLS6tJT3AA0175';
   async function pollChat() {
     try {
       const url = new URL('https://www.googleapis.com/youtube/v3/liveChat/messages');
@@ -131,9 +130,9 @@ function stopYouTubeConnection(liveChatId) {
 
 // ➕ POST /youtube/start
 app.post('/youtube/start', async (req, res) => {
-  const { user_id, youtube_live_chat_id, youtube_video_id } = req.body;
-  if (!user_id || !youtube_live_chat_id || !youtube_video_id) {
-    return res.status(400).json({ error: 'Champs requis : user_id, youtube_live_chat_id, youtube_video_id' });
+  const { user_id, youtube_live_chat_id, youtube_video_id, token } = req.body;
+  if (!user_id || !youtube_live_chat_id || !youtube_video_id || !token) {
+    return res.status(400).json({ error: 'Champs requis : user_id, youtube_live_chat_id, youtube_video_id, token' });
   }
 
   if (userToChatId.has(user_id)) {
@@ -151,7 +150,7 @@ app.post('/youtube/start', async (req, res) => {
     console.log(`[YOUTUBE] Ajout user ${user_id} à ${youtube_live_chat_id}`);
   } else {
     try {
-      users = await createYouTubeConnection(youtube_live_chat_id, youtube_video_id);
+      users = await createYouTubeConnection(youtube_live_chat_id, youtube_video_id,token);
     } catch (e) {
       console.error('[YOUTUBE] Erreur de connexion :', e.message);
       return res.status(500).json({ error: 'Connexion YouTube échouée' });

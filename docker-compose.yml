@@ -73,6 +73,9 @@ services:
   api_python:
     build: ./api_python
     container_name: api_python
+    environment:
+      - YOUTUBE_ACCESS_TOKEN=${YOUTUBE_ACCESS_TOKEN}
+      - TWITCH_TOKEN=${TWITCH_TOKEN}
     depends_on:
       - postgres
     ports:
