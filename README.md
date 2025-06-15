@@ -68,16 +68,3 @@ PFE_Chat is a fullstack chat aggregator designed to combine real-time chat and v
 - **Streamers:** Connect your Twitch, YouTube, and TikTok channels via OAuth, configure your channels, and aggregate chat/viewer data in one dashboard.
 - **Chat Gateway:** All messages and viewer counts are synchronized across platforms using Socket.IO.
 
-
-## Contributors
-
-- Main author: [NaiwannLallinec](https://github.com/NaiwannLallinec)
-- See GitHub contributors for full list.
-
-## License
-
-MIT License (or specify your license here)
-
----
-
-You can copy-paste this to your `README.md` and adapt it as needed! If you want a more detailed or shorter version or want badges/screenshots, let me know!
