@@ -1,8 +1,3 @@
-
-Here is a README draft for your PFE_Chat project, based on the code and structure:
-
----
-
 # PFE_Chat
 
 PFE_Chat is a fullstack chat aggregator designed to combine real-time chat and viewer data from multiple streaming platforms (Twitch, YouTube, TikTok) into a single unified web application. The project is split into several components using Angular (frontend), Python FastAPI (API/backend), and Node.js (microservices and OAuth).
