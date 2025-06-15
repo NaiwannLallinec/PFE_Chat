@@ -57,7 +57,7 @@ PFE_Chat is a fullstack chat aggregator designed to combine real-time chat and v
    This will start all services: frontend (Angular), backend (FastAPI), database, RabbitMQ, and chat microservices.
    
 5. **Access the Application:**
-   - Open [http://localhost:4200](http://localhost:4200) (or the port specified in your `docker-compose.yml`) to use PFE_Chat.
+   - Open [http://localhost:8080](http://localhost:8080) (or the port specified in your `docker-compose.yml`) to use PFE_Chat.
 
 
 ## Usage
